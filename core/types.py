@@ -15,5 +15,5 @@ class Load:
     magnitude: float| int
     position: float | int
 
-# Takes (Dimensions, list[Load]) -> Returns (numpy_array, numpy_array)
-PhysicsSolver = Callable[[BeamType, list[Load]], ArrayPair]
+PhysicsSolver = Callable[[list[Load]], ArrayPair]
+LoadFunction = Callable[[float], float]
