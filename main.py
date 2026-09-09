@@ -9,7 +9,7 @@ def main():
     ]
     for fun in l:
         load1 = Load(0,300, fun)
-        print(load1.get_average_value())
+        print(load1.get_area())
         print(load1.get_avg_value_point())
 
 
