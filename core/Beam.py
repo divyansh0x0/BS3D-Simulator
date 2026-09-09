@@ -11,7 +11,7 @@ LoadFunction = Callable[[float], float]
 
 
 def simpsonIntegral(function: LoadFunction, start: float, end: float, step_size: float):
-    if end >= start:
+    if start >= end:
         return 0
     n = int((end - start) / step_size)
     n = max(3, n + (3 - n % 3) % 3)
@@ -102,7 +102,8 @@ class Beam:
 
     def set_load_function(self, start: float, end: float, function: LoadFunction):
         self.continuous_loads.append(Load(start, end, function))
-        self.update_loads()
+    def set_point_load(self, load, x):
+        self.point_loads.append(PointLoad(magnitude=load, position=x))
 
     def update_loads(self):
         sum_moments = 0
