@@ -654,12 +654,12 @@ class CanvasView(ft.Container):
             self.canvas_shape_group.shapes.append(
                 cv.Text(value=f"{marker_point[0]:.2f}", x=mx, y=origin_y + 12,
                         alignment=ft.alignment.Alignment.CENTER_LEFT,
-                        style=ft.TextStyle(size=13, color=ft.Colors.SECONDARY)))
+                        style=ft.TextStyle(size=13, color=ft.Colors.TERTIARY)))
 
             self.canvas_shape_group.shapes.append(
                 cv.Text(value=f"{marker_point[1]:.2f}", x=mx,
                         y=my, alignment=ft.alignment.Alignment.CENTER_LEFT,
-                        style=ft.TextStyle(size=13, color=ft.Colors.SECONDARY)))
+                        style=ft.TextStyle(size=13, color=ft.Colors.TERTIARY)))
 
         draw_beam()
         draw_loads()
