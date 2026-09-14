@@ -2,7 +2,6 @@ import flet as ft
 from typing import Callable, Any
 from frontend.StateManager import StateManager
 
-
 class RightPanel(ft.Container):
     state: StateManager
     on_canvas_redraw: Callable[[], None]
@@ -16,66 +15,56 @@ class RightPanel(ft.Container):
         self.bgcolor = ft.Colors.SURFACE_CONTAINER_LOW
         self.padding = 15
 
-        def on_slider_change(e: Any) -> None:
-            self.state.cross_section_y_meters = float(e.control.value)
-            self.val_text.value = f"{self.state.cross_section_y_meters:.2f}m"
-            self.val_text.update()
-            if self.on_canvas_redraw:
-                self.on_canvas_redraw()
+        self.sf_val = ft.Text("0.00", color=ft.Colors.ON_SURFACE, weight=ft.FontWeight.BOLD, size=16)
+        self.bm_val = ft.Text("0.00", color=ft.Colors.ON_SURFACE, weight=ft.FontWeight.BOLD, size=16)
+        self.ss_val = ft.Text("0.00", color=ft.Colors.ON_SURFACE, weight=ft.FontWeight.BOLD, size=16)
+        self.bs_val = ft.Text("0.00", color=ft.Colors.ON_SURFACE, weight=ft.FontWeight.BOLD, size=16)
 
-        self.cross_section_y_slider = ft.Slider(
-            min=-1.0, max=1.0,
-            label="{value}",
-            value=self.state.cross_section_y_meters,
-            round=3,
-            on_change=on_slider_change,
-            expand=True
-        )
-
-        self.val_text = ft.Text(f"{self.state.cross_section_y_meters * 1000:.2f}mm", color=ft.Colors.PRIMARY,
-                                weight=ft.FontWeight.BOLD)
+        def make_table_row(label: str, unit: str, val_control: ft.Text) -> ft.Container:
+            return ft.Container(
+                content=ft.Row(
+                    controls=[
+                        ft.Text(label, color=ft.Colors.ON_SURFACE_VARIANT, size=12, expand=2),
+                        val_control,
+                        ft.Text(unit, color=ft.Colors.ON_SURFACE_VARIANT, size=12, expand=1, text_align=ft.TextAlign.RIGHT),
+                    ],
+                    alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                ),
+                padding=ft.Padding.symmetric(vertical=8),
+                border=ft.Border(bottom=ft.BorderSide(1, ft.Colors.OUTLINE_VARIANT))
+            )
 
         self.content = ft.Column(
             controls=[
-                ft.Text("Y-Axis Section", color=ft.Colors.ON_SURFACE, size=20, weight=ft.FontWeight.BOLD),
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            self.val_text,
-                            ft.Container(
-                                content=ft.RotatedBox(
-                                    quarter_turns=-1,
-                                    content=self.cross_section_y_slider
-                                ),
-                                expand=False
-                            )
-                        ],
-                        alignment=ft.MainAxisAlignment.START,
-                        expand=True,
-                    ),
-                    expand=2  # 66% of the column height
-                ),
-                ft.Container(expand=1)  # Remaining 33%
+                ft.Text("Cross Section Analysis", color=ft.Colors.ON_SURFACE, size=18, weight=ft.FontWeight.BOLD),
+                ft.Container(height=10),
+                ft.Text("Force & Moment", color=ft.Colors.PRIMARY, size=14, weight=ft.FontWeight.W_600),
+                make_table_row("Shear Force", "kN", self.sf_val),
+                make_table_row("Bending Moment", "kN·m", self.bm_val),
+                ft.Container(height=15),
+                ft.Text("Stress Distribution", color=ft.Colors.PRIMARY, size=14, weight=ft.FontWeight.W_600),
+                make_table_row("Shear Stress", "MPa", self.ss_val),
+                make_table_row("Bending Stress", "MPa", self.bs_val),
             ],
             spacing=5,
-            expand=True
+            expand=True,
         )
 
     def refresh(self) -> None:
-        if self.state._beam:
-            h = self.state._beam.get_height() / 2
-            self.cross_section_y_slider.min = -h
-            self.cross_section_y_slider.max = h
-            if self.cross_section_y_slider.value > h:
-                self.cross_section_y_slider.value = h
-                self.state.cross_section_y_meters = h
-            if self.cross_section_y_slider.value < -h:
-                self.cross_section_y_slider.value = -h
-                self.state.cross_section_y_meters = -h
-            self.val_text.value = f"{self.state.cross_section_y_meters * 1000:.2f}mm"
-
         try:
-            self.cross_section_y_slider.update()
-            self.val_text.update()
-        except RuntimeError:
+            sf = self.state.get_shear_force(self.state.cross_section_x)
+            bm = self.state.get_bending_moment(self.state.cross_section_x)
+            ss = self.state.get_shear_stress(self.state.cross_section_y_meters)
+            bs = self.state.get_bending_stress(self.state.cross_section_y_meters)
+
+            self.sf_val.value = f"{sf:.2f}"
+            self.bm_val.value = f"{bm:.2f}"
+            self.ss_val.value = f"{ss:.2f}"
+            self.bs_val.value = f"{bs:.2f}"
+
+            self.sf_val.update()
+            self.bm_val.update()
+            self.ss_val.update()
+            self.bs_val.update()
+        except Exception:
             pass

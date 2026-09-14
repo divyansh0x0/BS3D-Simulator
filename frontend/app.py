@@ -77,6 +77,7 @@ def app(page: ft.Page) -> None:
         beam_canvas.redraw()
         refresh_slider()
         right_panel.refresh()
+        y_slider_panel.refresh()
 
     def on_load_confirmed() -> None:
         left_panel.refresh_load_list()
@@ -93,19 +94,22 @@ def app(page: ft.Page) -> None:
         on_load_type_change=on_load_type_change,
     )
 
+    from frontend.components.y_slider import YSliderPanel
+    y_slider_panel = YSliderPanel(state=state, on_change=on_state_change)
+
     center_viewport = ft.Column(
         controls=[
             ft.Stack(
                 controls=[
                     beam_canvas,
                     load_panel,
+                    y_slider_panel,
                     ft.FloatingActionButton(
                         icon=ft.Icons.PLAY_ARROW,
-
                         on_click=lambda e: on_state_change(),
                         bgcolor=ft.Colors.TERTIARY,
                         foreground_color=ft.Colors.ON_TERTIARY,
-                        top=20,
+                        bottom=20,
                         right=20,
                     ),
                 ],
