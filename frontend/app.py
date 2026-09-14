@@ -8,15 +8,17 @@ from frontend.StateManager import StateManager
 def app(page: ft.Page) -> None:
     page.title = "BS3D - Beam Structural Analysis"
     page.padding = 0
-    page.bgcolor = "#0B0F19"
-
+    page.theme = ft.Theme(
+        color_scheme_seed=ft.Colors.BLUE,
+    )
+    page.theme_mode = ft.ThemeMode.DARK
     # --- APPLICATION STATE ---
     state: StateManager = StateManager()
 
     # Initialize Components
     beam_canvas: BeamCanvas = BeamCanvas(state)
 
-    current_val_text = ft.Text(f"{state.cross_section_x:.2f}m", color="#EAB308", weight=ft.FontWeight.BOLD, width=60)
+    current_val_text = ft.Text(f"{state.cross_section_x:.2f}m", color=ft.Colors.PRIMARY, weight=ft.FontWeight.BOLD, width=60)
 
     def on_slider_change(e):
         state.cross_section_x = float(e.control.value)
@@ -38,13 +40,13 @@ def app(page: ft.Page) -> None:
         expand=True,
     )
     
-    min_label = ft.Text("0.00m", color="#94A3B8", size=12)
-    max_label = ft.Text(f"{max(0.1, state.beam_length):.2f}m", color="#94A3B8", size=12)
+    min_label = ft.Text("0.00m", color=ft.Colors.ON_SURFACE_VARIANT, size=12)
+    max_label = ft.Text(f"{max(0.1, state.beam_length):.2f}m", color=ft.Colors.ON_SURFACE_VARIANT, size=12)
 
     slider_row = ft.Container(
         content=ft.Row(
             controls=[
-                ft.Text("Cross Section Position:", color="#F8FAFC"),
+                ft.Text("Cross Section Position:", color=ft.Colors.PRIMARY ),
                 current_val_text,
                 min_label,
                 cross_section_slider,
@@ -52,7 +54,7 @@ def app(page: ft.Page) -> None:
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         ),
-        bgcolor="#0F172A",
+        bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
         padding=10,
     )
 

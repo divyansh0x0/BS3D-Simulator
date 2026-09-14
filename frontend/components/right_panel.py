@@ -12,7 +12,7 @@ class RightPanel(ft.Container):
         self.on_canvas_redraw = on_canvas_redraw
         
         self.expand = 1
-        self.bgcolor = "#0F172A"
+        self.bgcolor = ft.Colors.SURFACE_CONTAINER_LOW
         self.padding = 15
 
         def on_slider_change(e: Any) -> None:
@@ -29,8 +29,8 @@ class RightPanel(ft.Container):
 
         self.content = ft.Column(
             controls=[
-                ft.Text("Analysis Tools", color="#F8FAFC", size=20, weight=ft.FontWeight.BOLD),
-                ft.Text("Cross Section Position (m)", color="#94A3B8", size=12),
+                ft.Text("Analysis Tools", color=ft.Colors.ON_SURFACE, size=20, weight=ft.FontWeight.BOLD),
+                ft.Text("Cross Section Position (m)", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
                 self.cross_section_slider
             ],
             spacing=12,

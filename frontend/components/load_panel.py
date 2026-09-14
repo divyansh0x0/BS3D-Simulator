@@ -16,10 +16,10 @@ class LoadPanel(ft.Container):
         
         self.load_content = ft.Column(spacing=10)
         self.content = self.load_content
-        self.border = ft.Border.all(1, "#334155")
+        self.border = ft.Border.all(1, ft.Colors.OUTLINE)
         self.border_radius = 10
         self.padding = 12
-        self.bgcolor = "#1E293B"
+        self.bgcolor = ft.Colors.SURFACE_CONTAINER_HIGHEST
         self.opacity = 0
         self.animate_opacity = 150
         self.top = 20
@@ -36,28 +36,28 @@ class LoadPanel(ft.Container):
         if selected_load == "Point":
             self.load_content.controls.extend(
                 [
-                    ft.Text("Point Load Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Load Magnitude (kN)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Load Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.Text("Point Load Parameters", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Load Magnitude (kN)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Load Position (m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
         elif selected_load == "UDL":
             self.load_content.controls.extend(
                 [
-                    ft.Text("UDL Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Load Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Start Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.Text("UDL Parameters", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Load Intensity (kN/m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Start Position (m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Position (m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
         elif selected_load == "UVL":
             self.load_content.controls.extend(
                 [
-                    ft.Text("UVL Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Start Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Start Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.Text("UVL Parameters", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Start Intensity (kN/m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Intensity (kN/m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Start Position (m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Position (m)", height=40, color=ft.Colors.ON_SURFACE, keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
 
@@ -66,8 +66,8 @@ class LoadPanel(ft.Container):
                 ft.Button(
                     "Confirm Load",
                     on_click=self.confirm_load,
-                    bgcolor="#2563EB",
-                    color="#FFFFFF",
+                    bgcolor=ft.Colors.PRIMARY,
+                    color=ft.Colors.ON_PRIMARY,
                 )
             )
 
@@ -116,10 +116,10 @@ class LoadPanel(ft.Container):
             self.on_load_confirmed()
 
         # Visual feedback flash
-        self.border = ft.Border.all(2, "#22C55E")
+        self.border = ft.Border.all(2, ft.Colors.TERTIARY)
         self.update()
         await asyncio.sleep(0.15)
 
         self.opacity = 0
-        self.border = ft.Border.all(1, "#334155")
+        self.border = ft.Border.all(1, ft.Colors.OUTLINE)
         self.update()

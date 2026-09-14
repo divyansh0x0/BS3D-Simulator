@@ -44,11 +44,11 @@ class BeamCanvas(ft.Container):
 
         self.slider_line_shape = cv.Line(
             x1=0, y1=0, x2=0, y2=0,
-            paint=ft.Paint(stroke_width=2, color="#EAB308", style=ft.PaintingStyle.STROKE)
+            paint=ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE)
         )
         self.slider_text_shape = cv.Text(
             x=0, y=0, value="",
-            style=ft.TextStyle(color="#EAB308", size=12, weight=ft.FontWeight.BOLD)
+            style=ft.TextStyle(color=ft.Colors.PRIMARY, size=12, weight=ft.FontWeight.BOLD)
         )
 
         self.canvas_container = ft.Container(
@@ -87,12 +87,12 @@ class BeamCanvas(ft.Container):
     def redraw(self) -> None:
         self.canvas_shape_group.shapes.clear()
 
-        box_paint = ft.Paint(stroke_width=2, color="#aaa", style=ft.PaintingStyle.STROKE)
-        axis_paint = ft.Paint(stroke_width=2, color="#34b1eb", style=ft.PaintingStyle.STROKE)
-        beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
-        cross_section_paint = ft.Paint(stroke_width=2, color="#456675", style=ft.PaintingStyle.STROKE)
-        graph_paint = ft.Paint(color="#304e5c", style=ft.PaintingStyle.FILL)
-        bold_style = ft.TextStyle(color="#FFF", size=10)
+        box_paint = ft.Paint(stroke_width=2, color=ft.Colors.OUTLINE, style=ft.PaintingStyle.STROKE)
+        axis_paint = ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE)
+        beam_paint = ft.Paint(stroke_width=2, color=ft.Colors.SURFACE_CONTAINER_HIGHEST, style=ft.PaintingStyle.FILL)
+        cross_section_paint = ft.Paint(stroke_width=2, color=ft.Colors.SECONDARY, style=ft.PaintingStyle.STROKE)
+        graph_paint = ft.Paint(color=ft.Colors.SECONDARY_CONTAINER, style=ft.PaintingStyle.FILL)
+        bold_style = ft.TextStyle(color=ft.Colors.ON_SURFACE, size=10)
 
         def draw_arrow(x: float, y: float, angle: float = 0, paint=axis_paint) -> None:
             h1 = 5
@@ -128,7 +128,7 @@ class BeamCanvas(ft.Container):
             ))
 
         def draw_loads():
-            from frontend.StateManager import PointLoadState, UDLLoadState
+            from frontend.StateManager import PointLoadState, UDLLoadState, UVLLoadState
 
             # Find the absolute maximum load for scaling
             max_load = 0.001
@@ -137,7 +137,7 @@ class BeamCanvas(ft.Container):
                     max_load = max(max_load, abs(l.magnitude_kn))
                 elif isinstance(l, UDLLoadState):
                     max_load = max(max_load, abs(l.intensity_kn_m))
-                elif hasattr(l, 'start_intensity_kn_m'):
+                elif isinstance(l, UVLLoadState):
                     max_load = max(max_load, abs(l.start_intensity_kn_m), abs(l.end_intensity_kn_m))
 
             # Maximum available pixel height for the tallest load arrow
@@ -165,7 +165,7 @@ class BeamCanvas(ft.Container):
                     else:
                         return alignment.Alignment.TOP_CENTER
 
-            def draw_point_load(value_kN: float, pos_meters: float, write_text=True, color="#EF4444",
+            def draw_point_load(value_kN: float, pos_meters: float, write_text=True, color=ft.Colors.ERROR,
                                 is_reaction=False):
                 if value_kN == 0.0 or self.state.beam_length <= 0: return
 
@@ -239,7 +239,7 @@ class BeamCanvas(ft.Container):
                     y_text_offset = 2
 
                 # Transparent background
-                fill_paint = ft.Paint(color="#44EF4444", style=ft.PaintingStyle.FILL)
+                fill_paint = ft.Paint(color=ft.Colors.with_opacity(0.2, ft.Colors.ERROR), style=ft.PaintingStyle.FILL)
                 self.canvas_shape_group.shapes.append(cv.Path(
                     [
                         cv.Path.MoveTo(x1, y1_base),
@@ -251,7 +251,7 @@ class BeamCanvas(ft.Container):
                 ))
 
                 # Draw boundary lines and text
-                outline_paint = ft.Paint(stroke_width=1, color="#EF4444", style=ft.PaintingStyle.STROKE)
+                outline_paint = ft.Paint(stroke_width=1, color=ft.Colors.ERROR, style=ft.PaintingStyle.STROKE)
                 self.canvas_shape_group.shapes.append(cv.Path(
                     [
                         cv.Path.MoveTo(x1, y1_base),
@@ -272,7 +272,7 @@ class BeamCanvas(ft.Container):
 
                     # Don't draw internal arrows if the height is smaller than the arrowhead (15px)
                     if abs(get_px_h(val)) > 15:
-                        draw_point_load(val, pos, False, color="#88EF4444")
+                        draw_point_load(val, pos, False, color=ft.Colors.with_opacity(0.5, ft.Colors.ERROR))
 
                 if val_start != 0:
                     fraction_start = pos_start / max(self.state.beam_length, 0.01)
@@ -280,7 +280,7 @@ class BeamCanvas(ft.Container):
                     self.canvas_shape_group.shapes.append(cv.Text(
                         x=x1, y=y1_top + y_text_offset, value=f"{abs(val_start):.2f}kN/m",
                         alignment=align_start,
-                        style=ft.TextStyle(color="#EF4444", size=12)
+                        style=ft.TextStyle(color=ft.Colors.ERROR, size=12)
                     ))
                 if val_end != 0 and abs(val_start - val_end) > 0.001:
                     fraction_end = pos_end / max(self.state.beam_length, 0.01)
@@ -288,7 +288,7 @@ class BeamCanvas(ft.Container):
                     self.canvas_shape_group.shapes.append(cv.Text(
                         x=x2, y=y2_top + y_text_offset, value=f"{abs(val_end):.2f}kN/m",
                         alignment=align_end,
-                        style=ft.TextStyle(color="#EF4444", size=12)
+                        style=ft.TextStyle(color=ft.Colors.ERROR, size=12)
                     ))
 
             loads = list(self.state.loads)
@@ -302,9 +302,9 @@ class BeamCanvas(ft.Container):
 
             # Draw reactions if they exist
             if hasattr(self.state, 'reaction_left_pos'):
-                draw_point_load(-self.state.reaction_left, self.state.reaction_left_pos, color="#22C55E",
+                draw_point_load(-self.state.reaction_left, self.state.reaction_left_pos, color=ft.Colors.TERTIARY,
                                 is_reaction=True)
-                draw_point_load(-self.state.reaction_right, self.state.reaction_right_pos, color="#22C55E",
+                draw_point_load(-self.state.reaction_right, self.state.reaction_right_pos, color=ft.Colors.TERTIARY,
                                 is_reaction=True)
 
         def draw_section_borders():
@@ -361,7 +361,7 @@ class BeamCanvas(ft.Container):
                 width=w,
                 height=h,
                 border_radius=5,
-                paint=ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE),
+                paint=ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE),
             ))
 
         def draw_beam_cross_section():
@@ -520,7 +520,7 @@ class BeamCanvas(ft.Container):
 
                 self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
 
-                graph_stroke_paint = ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE)
+                graph_stroke_paint = ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE)
                 self.canvas_shape_group.shapes.append(cv.Path(l, graph_stroke_paint))
 
             # draw graph first so that axes lay above it
@@ -553,7 +553,7 @@ class BeamCanvas(ft.Container):
             ))
 
             # Ticks for Y-axis
-            text_style = ft.TextStyle(color="#94A3B8", size=10)
+            text_style = ft.TextStyle(color=ft.Colors.ON_SURFACE_VARIANT, size=10)
             num_y_ticks = 2
             for i in range(1, num_y_ticks + 1):
                 val = max_abs_y * (i / num_y_ticks)
@@ -598,7 +598,7 @@ class BeamCanvas(ft.Container):
             # marking for current cross section
             if not marker_point:
                 return
-            point_paint = ft.Paint(color="#EAB308")
+            point_paint = ft.Paint(color=ft.Colors.PRIMARY)
             self.canvas_shape_group.shapes.append(
                 cv.Circle(x=origin_x + marker_point[0]*x_ratio, y=origin_y + marker_point[1]*y_ratio, radius=4, paint=point_paint))
 
@@ -626,9 +626,9 @@ class BeamCanvas(ft.Container):
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
-            y_lbl = "SFD (kN)" if i == 1 else "BMD (kN·m)"
+            y_lbl = "kN" if i == 1 else "kN·m"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterators[i - 1],marked_points[i - 1], "x (m)", y_lbl)
+                            h, axis_paint, True, False, iterators[i - 1],marked_points[i - 1], "m", y_lbl)
         iterators = (self.state.generate_shear_stress_points(num_points),
                      self.state.generate_bending_stress_points(num_points))
         for i in range(1, 3):
@@ -637,8 +637,8 @@ class BeamCanvas(ft.Container):
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
-            y_lbl = "y (mm)"
-            x_lbl = "Shear Stress (MPa)" if i == 1 else "Bending Stress (MPa)"
+            y_lbl = "mm"
+            x_lbl = "MPa"
             fixed_max = self.state.max_shear_stress if i == 1 else self.state.max_bending_stress
             draw_graph_axes(x, y, w,
                             h, axis_paint, True, True, iterators[i - 1], None, x_lbl, y_lbl, fixed_max_x=fixed_max)

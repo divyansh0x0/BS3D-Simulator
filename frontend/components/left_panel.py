@@ -23,15 +23,15 @@ class LeftPanel(ft.Container):
         self.on_load_type_change = on_load_type_change
         
         self.expand = 1
-        self.bgcolor = "#0F172A"
+        self.bgcolor = ft.Colors.SURFACE_CONTAINER_LOW
         self.padding = 15
 
         self.dimension_content = ft.Column(
             spacing=10,
             controls=[
-                ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                ft.TextField(label="Width (mm)", value="100.0", height=40, color="#F8FAFC", on_change=self.update_rect_width),
-                ft.TextField(label="Height (mm)", value="100.0", height=40, color="#F8FAFC", on_change=self.update_rect_height),
+                ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                ft.TextField(label="Width (mm)", value="100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
+                ft.TextField(label="Height (mm)", value="100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
             ]
         )
         self.dimensions_container = ft.Container(
@@ -49,11 +49,11 @@ class LeftPanel(ft.Container):
                 ft.dropdown.Option("Circular"),
                 ft.dropdown.Option("I-Beam"),
             ],
-            bgcolor="#0F172A",
-            border_color="#334155",
-            focused_border_color="#2563EB",
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
+            border_color=ft.Colors.OUTLINE,
+            focused_border_color=ft.Colors.PRIMARY,
             border_radius=8,
-            text_style=ft.TextStyle(color="#F8FAFC"),
+            text_style=ft.TextStyle(color=ft.Colors.ON_SURFACE),
             on_select=self.change_dimensions,
             expand=True
         )
@@ -65,11 +65,11 @@ class LeftPanel(ft.Container):
                 ft.dropdown.Option("UDL"),
                 ft.dropdown.Option("UVL"),
             ],
-            bgcolor="#0F172A",
-            border_color="#334155",
-            focused_border_color="#2563EB",
+            bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
+            border_color=ft.Colors.OUTLINE,
+            focused_border_color=ft.Colors.PRIMARY,
             border_radius=8,
-            text_style=ft.TextStyle(color="#F8FAFC"),
+            text_style=ft.TextStyle(color=ft.Colors.ON_SURFACE),
             on_select=self.change_load_handler,expand=True
         )
 
@@ -79,28 +79,28 @@ class LeftPanel(ft.Container):
             label="Beam Length (m)",
             value="10.0",
             height=40,
-            color="#F8FAFC",
+            color=ft.Colors.ON_SURFACE,
             on_change=self.update_beam_length,expand=True
         )
 
         self.solve_button = ft.Button(
             "Calculate SFD & BMD",
             on_click=self.on_solve_click,
-            bgcolor="#22C55E",
-            color="#FFFFFF",
+            bgcolor=ft.Colors.TERTIARY,
+            color=ft.Colors.ON_TERTIARY,
             height=45,expand=True
         )
 
         self.content = ft.Column(
             controls=[
-                ft.Text("Beam Controls", color="#F8FAFC", size=20, weight=ft.FontWeight.BOLD),
+                ft.Text("Beam Controls", color=ft.Colors.ON_SURFACE, size=20, weight=ft.FontWeight.BOLD),
                 self.beam_length_input,
-                ft.Text("Beam Section", color="#94A3B8", size=12),
+                ft.Text("Beam Section", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
                 self.beam_type,
                 self.dimensions_container,
-                ft.Text("Load Setup", color="#94A3B8", size=12),
+                ft.Text("Load Setup", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
                 self.load_type,
-                ft.Text("Active Loads", color="#94A3B8", size=12),
+                ft.Text("Active Loads", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
                 self.load_list_view,
                 self.solve_button,
             ],
@@ -193,28 +193,28 @@ class LeftPanel(ft.Container):
             self.state.beam_dimensions = IBeamDimensions()
             self.dimension_content.controls.extend(
                 [
-                    ft.Text("I-Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Height (mm)", height=40, color="#F8FAFC", on_change=self.update_ibeam_height),
-                    ft.TextField(label="Flange Width (mm)", height=40, color="#F8FAFC", on_change=self.update_ibeam_flange_width),
-                    ft.TextField(label="Flange Thickness (mm)", height=40, color="#F8FAFC", on_change=self.update_ibeam_flange_thickness),
-                    ft.TextField(label="Web Thickness (mm)", height=40, color="#F8FAFC", on_change=self.update_ibeam_web_thickness),
+                    ft.Text("I-Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Height (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_height),
+                    ft.TextField(label="Flange Width (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_width),
+                    ft.TextField(label="Flange Thickness (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_thickness),
+                    ft.TextField(label="Web Thickness (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_web_thickness),
                 ]
             )
         elif selected_beam == "Rectangular":
             self.state.beam_dimensions = RectangularDimensions()
             self.dimension_content.controls.extend(
                 [
-                    ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Width (mm)", height=40, color="#F8FAFC", on_change=self.update_rect_width),
-                    ft.TextField(label="Height (mm)", height=40, color="#F8FAFC", on_change=self.update_rect_height),
+                    ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Width (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
+                    ft.TextField(label="Height (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
                 ]
             )
         elif selected_beam == "Circular":
             self.state.beam_dimensions = CircularDimensions()
             self.dimension_content.controls.extend(
                 [
-                    ft.Text("Circular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Diameter (mm)", height=40, color="#F8FAFC", on_change=self.update_circ_diameter),
+                    ft.Text("Circular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                    ft.TextField(label="Diameter (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_circ_diameter),
                 ]
             )
         self.dimensions_container.opacity = 1
@@ -249,22 +249,40 @@ class LeftPanel(ft.Container):
             self.on_canvas_redraw()
 
     def refresh_load_list(self, do_update: bool = True) -> None:
+        from frontend.StateManager import PointLoadState, UDLLoadState, UVLLoadState
+        
         self.load_list_view.controls.clear()
         for idx, ld in enumerate(self.state.loads):
-            load_type_name: str = str(getattr(ld, 'load_type', 'Unknown'))
+            load_type_name: str = str(ld.load_type) if ld.load_type else "Unknown"
+            
+            if isinstance(ld, PointLoadState):
+                details = f"{ld.magnitude_kn}kN @ {ld.position_m}m"
+            elif isinstance(ld, UDLLoadState):
+                details = f"{ld.intensity_kn_m}kN/m from {ld.start_position_m}m to {ld.end_position_m}m"
+            elif isinstance(ld, UVLLoadState):
+                details = f"{ld.start_intensity_kn_m} to {ld.end_intensity_kn_m}kN/m from {ld.start_position_m}m to {ld.end_position_m}m"
+            else:
+                details = "Unknown parameters"
+
             self.load_list_view.controls.append(
                 ft.Container(
-                    bgcolor="#1E293B",
+                    bgcolor=ft.Colors.SURFACE_CONTAINER_HIGH,
                     padding=8,
                     border_radius=6,
                     content=ft.Row(
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                         controls=[
-                            ft.Text(f"{load_type_name}", size=12, color="#F8FAFC"),
+                            ft.Column(
+                                spacing=2,
+                                controls=[
+                                    ft.Text(f"{load_type_name} Load", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
+                                    ft.Text(details, size=11, color=ft.Colors.ON_SURFACE_VARIANT),
+                                ]
+                            ),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINED,
                                 icon_size=16,
-                                icon_color="#EF4444",
+                                icon_color=ft.Colors.ERROR,
                                 on_click=lambda e, i=idx: self.remove_load(i),
                             ),
                         ],
