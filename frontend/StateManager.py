@@ -91,7 +91,9 @@ class StateManager:
     loads: List[LoadState]
     
     reaction_left: float
+    reaction_left_pos: float
     reaction_right: float
+    reaction_right_pos: float
     _beam: Optional[Beam]
 
     def __init__(self) -> None:
@@ -108,7 +110,9 @@ class StateManager:
         ]
         
         self.reaction_left = 0.0
+        self.reaction_left_pos = 0.0
         self.reaction_right = 0.0
+        self.reaction_right_pos = 10.0
         self._beam = None
 
     def solve(self) -> None:
@@ -171,7 +175,9 @@ class StateManager:
 
         beam.update_loads()
         self.reaction_left = beam.reaction_left.magnitude
+        self.reaction_left_pos = beam.reaction_left.position
         self.reaction_right = beam.reaction_right.magnitude
+        self.reaction_right_pos = beam.reaction_right.position
         self._beam = beam
 
     def generate_sfd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
