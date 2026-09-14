@@ -42,15 +42,6 @@ class CanvasView(ft.Container):
             expand=True,
         )
 
-        self.slider_line_shape = cv.Line(
-            x1=0, y1=0, x2=0, y2=0,
-            paint=ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE)
-        )
-        self.slider_text_shape = cv.Text(
-            x=0, y=0, value="",
-            style=ft.TextStyle(color=ft.Colors.PRIMARY, size=12, weight=ft.FontWeight.BOLD)
-        )
-
         self.canvas_container = ft.Container(
             content=self.canvas_shape_group,
             expand=True,
@@ -82,7 +73,7 @@ class CanvasView(ft.Container):
         return self.realtime_width * self.section_width_fraction - self.spacing * 2
 
     def get_beam_height(self) -> float:
-        return 50.0
+        return 10.0
 
     def redraw(self) -> None:
         self.canvas_shape_group.shapes.clear()
@@ -438,6 +429,48 @@ class CanvasView(ft.Container):
                             paint=cross_section_paint,
                         )
                     )
+            
+            if self.state._beam is not None:
+                real_height = self.state._beam.get_height()
+                if real_height > 0:
+                    if self.state.beam_type == "Circular":
+                        pixel_height = diameter
+                        pixel_width = diameter
+                    elif self.state.beam_type == "Rectangular":
+                        pixel_height = h1
+                        pixel_width = w1
+                    elif self.state.beam_type == "I-Beam":
+                        pixel_height = h_px
+                        pixel_width = fw_px
+                    else:
+                        pixel_height = diameter
+                        pixel_width = diameter
+                    
+                    y_offset_px = (self.state.cross_section_y_meters / real_height) * pixel_height
+                    line_y = center_y
+
+                    self.canvas_shape_group.shapes.append(cv.Line(
+                        x1=center_x - pixel_width / 2 - 10,
+                        y1=line_y,
+                        x2=center_x + pixel_width / 2 + 10,
+                        y2=line_y,
+                        paint=ft.Paint(stroke_width=2, color=ft.Colors.TERTIARY, style=ft.PaintingStyle.STROKE)
+                    ))
+                    self.canvas_shape_group.shapes.append(cv.Line(
+                        x1=center_x - section_width/2,
+                        y1=line_y-y_offset_px,
+                        x2=center_x + section_width/2,
+                        y2=line_y-y_offset_px,
+                        paint=ft.Paint(stroke_width=2, color=ft.Colors.SECONDARY, style=ft.PaintingStyle.STROKE)
+                    ))
+                    self.canvas_shape_group.shapes.append(cv.Text(
+                        value=f"y={self.state.cross_section_y_meters * 1000:.2f}mm",
+                        x=center_x - section_width/2+10,
+                        y=line_y - y_offset_px - 5,
+                        alignment=ft.Alignment.BOTTOM_LEFT,
+                        style=ft.TextStyle(size=12, color=ft.Colors.SECONDARY)
+                    ))
+
 
         def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
                             has_negatives_y: bool = False,
@@ -473,7 +506,7 @@ class CanvasView(ft.Container):
                 min_y, max_y = min_max_y(points)
                 min_x, max_x = min_max_x(points)
 
-            max_abs_y = max(abs(min_y), abs(max_y)) * 1.2
+            max_abs_y = max(abs(min_y), abs(max_y)) * 1.1
             if max_abs_y == 0:
                 max_abs_y = 1.0
 
@@ -484,9 +517,9 @@ class CanvasView(ft.Container):
 
             if has_negative_x:
                 if fixed_max_x is not None:
-                    max_abs_x = fixed_max_x * 1.2
+                    max_abs_x = fixed_max_x * 1.1
                 else:
-                    max_abs_x = max(abs(min_x), abs(max_x)) * 1.2
+                    max_abs_x = max(abs(min_x), abs(max_x)) * 1.1
                 if max_abs_x == 0:
                     max_abs_x = 1.0
                 x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
@@ -621,7 +654,7 @@ class CanvasView(ft.Container):
         iterators = (self.state.generate_sfd_points(num_points), self.state.generate_bmd_points(num_points))
         bm_y = self.state.get_bending_moment(self.state.cross_section_x)
         sf_y = self.state.get_shear_force(self.state.cross_section_x)
-        marked_points = ((self.state.cross_section_x, sf_y), (self.state.cross_section_x, bm_y))
+        sfd_bmd_marked_points = ((self.state.cross_section_x, sf_y), (self.state.cross_section_x, bm_y))
         for i in range(1, 3):
             x = self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
@@ -630,9 +663,12 @@ class CanvasView(ft.Container):
 
             y_lbl = "kN" if i == 1 else "kN·m"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterators[i - 1], marked_points[i - 1], "m", y_lbl)
+                            h, axis_paint, True, False, iterators[i - 1], sfd_bmd_marked_points[i - 1], "m", y_lbl)
         iterators = (self.state.generate_shear_stress_points(num_points),
                      self.state.generate_bending_stress_points(num_points))
+
+        y_mm = self.state.cross_section_y_meters * 1000.0
+        bending_stress_and_shear_stress_marked_points =  ((self.state.get_shear_stress(self.state.cross_section_y_meters), y_mm), (self.state.get_bending_stress(self.state.cross_section_y_meters), y_mm))
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
@@ -643,36 +679,33 @@ class CanvasView(ft.Container):
             x_lbl = "MPa"
             fixed_max = self.state.max_shear_stress if i == 1 else self.state.max_bending_stress
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True, iterators[i - 1], None, x_lbl, y_lbl, fixed_max_x=fixed_max)
+                            h, axis_paint, True, True, iterators[i - 1], bending_stress_and_shear_stress_marked_points[i-1], x_lbl, y_lbl, fixed_max_x=fixed_max)
+
+        slider_line_shape = cv.Line(
+            x1=0, y1=0, x2=0, y2=0,
+            paint=ft.Paint(stroke_width=2, color=ft.Colors.PRIMARY, style=ft.PaintingStyle.STROKE)
+        )
+        slider_text_shape = cv.Text(
+            x=0, y=0, value="",
+            style=ft.TextStyle(color=ft.Colors.PRIMARY, size=12, weight=ft.FontWeight.BOLD)
+        )
+
         # Draw vertical line for slider cross-section position
         if self.state.beam_length > 0:
             w_beam = self.realtime_width * self.section_width_fraction - self.spacing * 2
             slider_pixel_x = self.spacing + (self.state.cross_section_x / self.state.beam_length) * w_beam
 
-            self.slider_line_shape.x1 = slider_pixel_x
-            self.slider_line_shape.x2 = slider_pixel_x
-            self.slider_line_shape.y1 = 0
-            self.slider_line_shape.y2 = self.realtime_height
+            slider_line_shape.x1 = slider_pixel_x
+            slider_line_shape.x2 = slider_pixel_x
+            slider_line_shape.y1 = 0
+            slider_line_shape.y2 = self.realtime_height
 
-            self.slider_text_shape.x = slider_pixel_x + 5
-            self.slider_text_shape.y = 10
-            self.slider_text_shape.value = f"x = {self.state.cross_section_x:.2f}m"
+            slider_text_shape.x = slider_pixel_x + 5
+            slider_text_shape.y = 10
+            slider_text_shape.value = f"x = {self.state.cross_section_x:.2f}m"
 
-            self.canvas_shape_group.shapes.append(self.slider_line_shape)
-            self.canvas_shape_group.shapes.append(self.slider_text_shape)
+            self.canvas_shape_group.shapes.append(slider_line_shape)
+            self.canvas_shape_group.shapes.append(slider_text_shape)
 
         draw_section_borders()
         self.canvas_shape_group.update()
-
-    def update_vertical_line(self, new_x: float) -> None:
-        if self.state.beam_length > 0:
-            w_beam = self.realtime_width * self.section_width_fraction - self.spacing * 2
-            slider_pixel_x = self.spacing + (new_x / self.state.beam_length) * w_beam
-
-            self.slider_line_shape.x1 = slider_pixel_x
-            self.slider_line_shape.x2 = slider_pixel_x
-
-            self.slider_text_shape.x = slider_pixel_x + 5
-            self.slider_text_shape.value = f"x = {new_x:.2f}m"
-
-            self.canvas_shape_group.update()

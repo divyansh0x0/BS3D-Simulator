@@ -129,6 +129,7 @@ class StateManager:
         self.reaction_right_pos = 10.0
         self._beam = None
         self.cross_section_x = 5.0
+        self.cross_section_y_meters = 0.0
 
     def solve(self) -> None:
         """
@@ -284,13 +285,39 @@ class StateManager:
             y_mm = float(y) * 1000.0
             yield stress_mpa, y_mm
 
-    def get_shear_force(self, cross_section_x):
+    def get_shear_force(self, cross_section_x) -> float:
         if self._beam is not None:
             return self._beam.get_shear_force(cross_section_x)
         else:
             return 0
-    def get_bending_moment(self, cross_section_x):
-            if self._beam is not None:
-                return self._beam.get_bending_moment(cross_section_x)
-            else:
-                return 0
+
+    def get_bending_moment(self, cross_section_x) -> float:
+        if self._beam is not None:
+            return self._beam.get_bending_moment(cross_section_x)
+        else:
+            return 0
+
+    def get_shear_stress(self, cross_section_y: float) -> float:
+        if self._beam is None:
+            return 0
+        V = self._beam.get_shear_force(self.cross_section_x)
+        I = self._beam.get_second_moment_of_area()
+        y = cross_section_y
+        Q = self._beam.get_first_moment_of_area(y)
+        b = self._beam.get_width(y)
+        stress_kpa = (V * Q) / (I * b)
+
+        stress_mpa = float(stress_kpa) / 1000.0
+        return stress_mpa
+
+    def get_bending_stress(self, cross_section_y) -> float:
+        if self._beam is None:
+            return 0
+        M = self._beam.get_bending_moment(self.cross_section_x)
+        I = self._beam.get_second_moment_of_area()
+        if I == 0:
+            return 0
+
+        stress_kpa = (M * float(cross_section_y)) / I
+        stress_mpa = stress_kpa / 1000.0
+        return stress_mpa

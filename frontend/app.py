@@ -28,7 +28,6 @@ def app(page: ft.Page) -> None:
         val = float(e.control.value)
         current_val_text.value = f"{val:.2f}m"
         current_val_text.update()
-        beam_canvas.update_vertical_line(val)
 
     cross_section_slider = ft.Slider(
         min=0, max=max(0,state.beam_length),
@@ -77,6 +76,7 @@ def app(page: ft.Page) -> None:
         state.solve()
         beam_canvas.redraw()
         refresh_slider()
+        right_panel.refresh()
 
     def on_load_confirmed() -> None:
         left_panel.refresh_load_list()
@@ -117,11 +117,15 @@ def app(page: ft.Page) -> None:
         spacing=0
     )
 
+    from frontend.components.right_panel import RightPanel
+    right_panel = RightPanel(state=state, on_canvas_redraw=on_state_change)
+
     page.add(
         ft.Row(
             controls=[
                 left_panel,
                 center_viewport,
+                right_panel,
             ],
             expand=True,
             spacing=0,
