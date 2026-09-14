@@ -129,4 +129,7 @@ def app(page: ft.Page) -> None:
         )
     )
 
+    # Solve and render the initial default state on load
+    on_state_change()
+
 
