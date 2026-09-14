@@ -1,3 +1,4 @@
+import math
 from numbers import Number
 from turtledemo.chaos import h
 
@@ -43,6 +44,38 @@ class BeamCanvas(ft.Container):
         axis_paint = ft.Paint(stroke_width=2, color="#34b1eb", style=ft.PaintingStyle.STROKE)
         beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
         cross_section_paint = ft.Paint(stroke_width=2, color="#456675", style=ft.PaintingStyle.STROKE)
+
+        def draw_arrow(x: float, y: float, angle:float = 0) -> None:
+            w1 = 30
+            h1 = 10
+            x1 = x-w1
+            y1 = y + h1 / 2
+            x2 = x-w1
+            y2 = y - h1 / 2
+
+            def transform(__x:float, __y:float, __cx:float, __cy:float, angle:float):
+                angle_rad = angle * math.pi / 180
+                rx = (__x - __cx) * math.cos(angle_rad) - (__y - __cy) * math.sin(angle_rad) + __cx
+                ry = (__x - __cx) * math.sin(angle_rad) + (__y - __cy) * math.cos(angle_rad) + __cy
+                return rx, ry
+            tx1, ty1 = transform(x1, y1, x, y, angle)
+            tx2, ty2 = transform(x2, y2, x, y, angle)
+
+            self.canvas_shape_group.shapes.append(cv.Line(
+                x1=tx1,
+                x2=x,
+                y1=ty1,
+                y2=y,
+                paint=axis_paint
+            ))
+
+            self.canvas_shape_group.shapes.append(cv.Line(
+                x1=tx2,
+                x2=x,
+                y1=ty2,
+                y2=y,
+                paint=axis_paint
+            ))
 
         def draw_section_borders():
             xb1 = 0
@@ -124,9 +157,9 @@ class BeamCanvas(ft.Container):
                         h1 /= aspect
                     else:
                         w1 *= aspect
-                
-                x1 = center_x - w1/2
-                y1 = center_y - h1/2
+
+                x1 = center_x - w1 / 2
+                y1 = center_y - h1 / 2
                 self.canvas_shape_group.shapes.append(cv.Rect(
                     x=x1,
                     y=y1,
@@ -189,8 +222,8 @@ class BeamCanvas(ft.Container):
 
             if has_negatives_y:
                 origin_y = y + h / 2
-                abscissa_y1 = origin_y - h / 2
-                abscissa_y2 = origin_y + h / 2
+                abscissa_y2 = origin_y - h / 2
+                abscissa_y1 = origin_y + h / 2
 
             self.canvas_shape_group.shapes.append(cv.Line(
                 x1=origin_x,
@@ -206,6 +239,8 @@ class BeamCanvas(ft.Container):
                 y2=origin_y,
                 paint=axis_paint,
             ))
+            draw_arrow(ordinate_x2, origin_y)
+            draw_arrow(origin_x, abscissa_y2, -90)
 
         draw_beam()
         draw_beam_cross_section()
