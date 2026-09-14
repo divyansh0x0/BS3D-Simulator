@@ -180,11 +180,12 @@ class IBeam(Beam):
     @override
     def get_first_moment_of_area(self, y: float) -> float:
         h1 = self.flange_h * 2 + self.web_h
-        if y <= self.web_h / 2:
+        abs_y = abs(y)
+        if abs_y <= self.web_h / 2:
             return self.flange_w * self.flange_h * (h1 / 2 - self.flange_h / 2) + self.web_w / 2 * (
-                    (h1 / 2 - self.flange_h) ** 2 - y ** 2)
+                    (h1 / 2 - self.flange_h) ** 2 - abs_y ** 2)
         else:
-            return self.flange_w / 2 * (h1 / 2 - y) ** 2
+            return self.flange_w / 2 * ((h1 / 2) ** 2 - abs_y ** 2)
 
     @override
     def get_width(self, y: float) -> float:
