@@ -1,7 +1,5 @@
-import collections
-from typing import Any, List, Optional, Tuple, Union, Iterator
+from typing import List, Optional, Tuple, Iterator
 from dataclasses import dataclass
-import numpy as np
 
 from core.Beam import Beam, RectangularBeam, CircularBeam, IBeam, BeamType, LoadType, LoadFunction
 

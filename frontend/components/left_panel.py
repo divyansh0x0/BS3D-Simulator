@@ -1,6 +1,5 @@
 import flet as ft
-import asyncio
-from typing import Callable, Coroutine, Any, Dict
+from typing import Callable, Coroutine, Any
 from frontend.StateManager import StateManager
 
 class LeftPanel(ft.Container):
@@ -11,7 +10,6 @@ class LeftPanel(ft.Container):
     dimensions_container: ft.Container
     load_list_view: ft.Column
     beam_type: ft.Dropdown
-    material_type: ft.Dropdown
     load_type: ft.Dropdown
     beam_length_input: ft.TextField
 
@@ -106,18 +104,6 @@ class LeftPanel(ft.Container):
             scroll=ft.ScrollMode.AUTO,
         )
         self.refresh_load_list(do_update=False)
-
-    async def change_material(self, e: Any) -> None:
-        from frontend.StateManager import MaterialType
-        selected = e.control.value if e.control.value else None
-        if selected == "Steel":
-            self.state.material_type = MaterialType.STEEL
-        elif selected == "Aluminum":
-            self.state.material_type = MaterialType.ALUMINUM
-        elif selected == "Concrete":
-            self.state.material_type = MaterialType.CONCRETE
-        elif selected == "Wood":
-            self.state.material_type = MaterialType.WOOD
 
     def _parse_float(self, control: ft.TextField) -> float:
         val = str(control.value).strip() if control.value else ""

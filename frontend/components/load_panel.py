@@ -1,6 +1,6 @@
 import flet as ft
 import asyncio
-from typing import Callable, Optional, Any, Dict
+from typing import Callable, Optional, Any
 from frontend.StateManager import StateManager
 
 class LoadPanel(ft.Container):

@@ -1,5 +1,5 @@
 import flet as ft
-from typing import Callable, Any
+from typing import Callable
 from frontend.StateManager import StateManager
 
 class RightPanel(ft.Container):

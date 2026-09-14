@@ -1,14 +1,10 @@
 import math
 from collections.abc import Iterator
-from itertools import tee
-from numbers import Number
-from turtledemo.chaos import h
 from typing import Tuple
 
 import flet as ft
 import flet.canvas as cv
-from flet import TextAlign, FontWeight
-from flet.controls import border_radius, alignment
+from flet.controls import alignment
 
 from frontend.StateManager import StateManager, PointLoadState, UDLLoadState, UVLLoadState
 
@@ -66,7 +62,6 @@ class CanvasView(ft.Container):
     def update_realtime_size(self, e: ft.LayoutSizeChangeEvent) -> None:
         self.realtime_width = float(e.width)
         self.realtime_height = float(e.height)
-        print(self.realtime_width, self.realtime_height)
         self.redraw()
 
     def get_rendered_beam_length(self) -> float:
@@ -83,7 +78,6 @@ class CanvasView(ft.Container):
         beam_paint = ft.Paint(stroke_width=2, color=ft.Colors.SURFACE_CONTAINER_HIGHEST, style=ft.PaintingStyle.FILL)
         cross_section_paint = ft.Paint(stroke_width=2, color=ft.Colors.SECONDARY, style=ft.PaintingStyle.STROKE)
         graph_paint = ft.Paint(color=ft.Colors.SECONDARY_CONTAINER, style=ft.PaintingStyle.FILL)
-        bold_style = ft.TextStyle(color=ft.Colors.ON_SURFACE, size=10)
 
         def draw_arrow(x: float, y: float, angle: float = 0, paint=axis_paint) -> None:
             h1 = 5
