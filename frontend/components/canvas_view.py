@@ -206,7 +206,7 @@ class BeamCanvas(ft.Container):
                         )
                     )
 
-        def draw_graph(x: float, y: float, w: float, h: float, axis_paint, has_negatives_y=False,
+        def draw_graph_axes(x: float, y: float, w: float, h: float, axis_paint, has_negatives_y=False,
                        has_negative_x=False) -> None:
             origin_x = x
             origin_y = y + h
@@ -250,14 +250,14 @@ class BeamCanvas(ft.Container):
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
-            draw_graph(x, y, w,
+            draw_graph_axes(x, y, w,
                        h, axis_paint, False, False)
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
-            draw_graph(x, y, w,
+            draw_graph_axes(x, y, w,
                        h, axis_paint, True, True)
         draw_section_borders()
         self.canvas_shape_group.update()

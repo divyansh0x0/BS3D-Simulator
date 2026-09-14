@@ -73,8 +73,17 @@ class UVLLoadState(LoadState):
         self.end_position_m = end_position_m
 
 
+from enum import Enum
+
+class MaterialType(Enum):
+    STEEL = "Steel"
+    ALUMINUM = "Aluminum"
+    CONCRETE = "Concrete"
+    WOOD = "Wood"
+
 class StateManager:
     beam_type: Optional[BeamType]
+    material_type: Optional[MaterialType]
     beam_length: float
     beam_dimensions: Optional[BeamDimensions]
     supports: List[SupportState]
@@ -87,6 +96,7 @@ class StateManager:
 
     def __init__(self) -> None:
         self.beam_type = None
+        self.material_type = None
         self.beam_length = 10.0
         self.beam_dimensions = None
         self.supports = [
