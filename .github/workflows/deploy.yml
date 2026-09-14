@@ -20,6 +20,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
+          flutter-version: "3.44.8"
           channel: stable
 
       - uses: actions/setup-python@v5
@@ -36,7 +37,7 @@ jobs:
         run: pip install flet
 
       - name: Build web
-        run: flet build web
+        run: echo "y" | flet build web
 
       - uses: actions/upload-pages-artifact@v3
         with:
