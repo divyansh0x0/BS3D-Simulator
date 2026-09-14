@@ -5,19 +5,23 @@ import numpy as np
 
 from core.Beam import Beam, RectangularBeam, CircularBeam, IBeam, BeamType, LoadType, LoadFunction
 
+
 # --- Dimension State Classes ---
 @dataclass
 class BeamDimensions:
     pass
+
 
 @dataclass
 class RectangularDimensions(BeamDimensions):
     width_mm: float = 100.0
     height_mm: float = 100.0
 
+
 @dataclass
 class CircularDimensions(BeamDimensions):
     diameter_mm: float = 100.0
+
 
 @dataclass
 class IBeamDimensions(BeamDimensions):
@@ -26,26 +30,30 @@ class IBeamDimensions(BeamDimensions):
     flange_thickness_mm: float = 10.0
     web_thickness_mm: float = 10.0
 
+
 # --- Support State Classes ---
 @dataclass
 class SupportState:
     support_type: str  # e.g., "Pin", "Roller"
     position: float
 
+
 # --- Load State Classes ---
 @dataclass
 class LoadState:
     load_type: LoadType
 
+
 @dataclass
 class PointLoadState(LoadState):
     magnitude_kn: float = 0.0
     position_m: float = 0.0
-    
+
     def __init__(self, magnitude_kn: float = 0.0, position_m: float = 0.0):
         super().__init__("Point")
         self.magnitude_kn = magnitude_kn
         self.position_m = position_m
+
 
 @dataclass
 class UDLLoadState(LoadState):
@@ -59,6 +67,7 @@ class UDLLoadState(LoadState):
         self.start_position_m = start_position_m
         self.end_position_m = end_position_m
 
+
 @dataclass
 class UVLLoadState(LoadState):
     start_intensity_kn_m: float = 0.0
@@ -66,7 +75,8 @@ class UVLLoadState(LoadState):
     start_position_m: float = 0.0
     end_position_m: float = 0.0
 
-    def __init__(self, start_intensity_kn_m: float = 0.0, end_intensity_kn_m: float = 0.0, start_position_m: float = 0.0, end_position_m: float = 0.0):
+    def __init__(self, start_intensity_kn_m: float = 0.0, end_intensity_kn_m: float = 0.0,
+                 start_position_m: float = 0.0, end_position_m: float = 0.0):
         super().__init__("UVL")
         self.start_intensity_kn_m = start_intensity_kn_m
         self.end_intensity_kn_m = end_intensity_kn_m
@@ -76,20 +86,22 @@ class UVLLoadState(LoadState):
 
 from enum import Enum
 
+
 class MaterialType(Enum):
     STEEL = "Steel"
     ALUMINUM = "Aluminum"
     CONCRETE = "Concrete"
     WOOD = "Wood"
 
+
 class StateManager:
-    beam_type: Optional[BeamType]
+    beam_type: BeamType
     material_type: Optional[MaterialType]
     beam_length: float
     beam_dimensions: Optional[BeamDimensions]
     supports: List[SupportState]
     loads: List[LoadState]
-    
+
     reaction_left: float
     reaction_left_pos: float
     reaction_right: float
@@ -97,7 +109,9 @@ class StateManager:
     _beam: Optional[Beam]
 
     def __init__(self) -> None:
-        self.beam_type = "Rectangular"
+        self.max_shear_stress = 0
+        self.max_bending_stress = 0
+        self.beam_type: BeamType = "Rectangular"
         self.material_type = MaterialType.STEEL
         self.beam_length = 10.0
         self.beam_dimensions = RectangularDimensions()
@@ -108,7 +122,7 @@ class StateManager:
         self.loads = [
             PointLoadState(magnitude_kn=10.0, position_m=5.0)
         ]
-        
+
         self.reaction_left = 0.0
         self.reaction_left_pos = 0.0
         self.reaction_right = 0.0
@@ -138,10 +152,10 @@ class StateManager:
             ft_thick = self.beam_dimensions.flange_thickness_mm / 1000.0
             wt = self.beam_dimensions.web_thickness_mm / 1000.0
             beam = IBeam(
-                flange_width=fw, 
-                flange_height=ft_thick, 
-                web_width=wt, 
-                web_height=max(0.001, hw - 2 * ft_thick), 
+                flange_width=fw,
+                flange_height=ft_thick,
+                web_width=wt,
+                web_height=max(0.001, hw - 2 * ft_thick),
                 length=self.beam_length
             )
         else:
@@ -160,12 +174,13 @@ class StateManager:
                 end_mag = ld.end_intensity_kn_m
                 start = ld.start_position_m
                 end = ld.end_position_m
-                
-                def uvl_func(x: float, s: float=start, e: float=end, sm: float=start_mag, em: float=end_mag) -> float:
+
+                def uvl_func(x: float, s: float = start, e: float = end, sm: float = start_mag,
+                             em: float = end_mag) -> float:
                     if e == s:
                         return sm
                     return sm + (em - sm) * (x - s) / (e - s)
-                
+
                 beam.set_load_function(start, end, uvl_func)
 
         for sup in self.supports:
@@ -180,11 +195,11 @@ class StateManager:
         self.reaction_right = beam.reaction_right.magnitude
         self.reaction_right_pos = beam.reaction_right.position
         self._beam = beam
-        
+
         # Calculate global max stresses for consistent graphing scale
         self.max_bending_stress = 1.0
         self.max_shear_stress = 1.0
-        
+
         I = beam.get_second_moment_of_area()
         if I > 0:
             dx = self.beam_length / 50
@@ -196,16 +211,21 @@ class StateManager:
                 m = abs(beam.get_bending_moment(x))
                 v = abs(beam.get_shear_force(x))
                 if m > max_m_abs: max_m_abs = m
-                if v > max_v_abs: 
+                if v > max_v_abs:
                     max_v_abs = v
                     max_v_x = x
-            
+
             y_max = beam.get_height() / 2
-            self.max_bending_stress = max(1e-9, (max_m_abs * y_max) / I)
+            self.max_bending_stress = max(1e-9, ((max_m_abs * y_max) / I) / 1000.0)
+
+            original_x = self.cross_section_x
+            self.cross_section_x = max_v_x
             
-            _, stresses = beam.get_shear_stress_distribution(max_v_x, 50)
+            stresses = [stress for stress, y in self.generate_shear_stress_points(50)]
             if len(stresses) > 0:
                 self.max_shear_stress = max(1e-9, float(max(abs(s) for s in stresses)))
+                
+            self.cross_section_x = original_x
 
     def generate_sfd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
         import collections.abc
@@ -214,7 +234,7 @@ class StateManager:
         dx = self.beam_length / num_points
         for i in range(num_points + 1):
             x = i * dx
-            yield (x, self._beam.get_shear_force(x))
+            yield x, self._beam.get_shear_force(x)
 
     def generate_bmd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
         import collections.abc
@@ -223,20 +243,23 @@ class StateManager:
         dx = self.beam_length / num_points
         for i in range(num_points + 1):
             x = i * dx
-            yield (x, self._beam.get_bending_moment(x))
+            yield x, self._beam.get_bending_moment(x)
 
     def generate_bending_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
         if not self._beam or self.beam_length <= 0:
             return
-        
+
         target_x = min(max(0.0, self.cross_section_x), self.beam_length)
         M = self._beam.get_bending_moment(target_x)
         I = self._beam.get_second_moment_of_area()
         if I == 0:
             return
-        
-        y_points = self._beam.generate_y_array(num_points)
-        for y in y_points:
+
+        y_step = self._beam.get_height() / num_points
+        y_start = -self._beam.get_height() / 2
+        for i in range(0, num_points):
+            y = y_start + i * y_step
+
             stress_kpa = (M * float(y)) / I
             stress_mpa = stress_kpa / 1000.0
             y_mm = float(y) * 1000.0
@@ -245,10 +268,18 @@ class StateManager:
     def generate_shear_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
         if not self._beam or self.beam_length <= 0:
             return
-        
+
         target_x = min(max(0.0, self.cross_section_x), self.beam_length)
-        y_points, stresses = self._beam.get_shear_stress_distribution(target_x, num_points)
-        for y, stress in zip(y_points, stresses):
-            stress_mpa = float(stress) / 1000.0
+        V = self._beam.get_shear_force(target_x)
+        I = self._beam.get_second_moment_of_area()
+        y_step = self._beam.get_height() / num_points
+        y_start = -self._beam.get_height() / 2
+        for i in range(0, num_points):
+            y = y_start + i * y_step
+            Q = self._beam.get_first_moment_of_area(y)
+            b = self._beam.get_width(y)
+            stress_kpa = (V * Q) / (I * b)
+
+            stress_mpa = float(stress_kpa) / 1000.0
             y_mm = float(y) * 1000.0
             yield stress_mpa, y_mm

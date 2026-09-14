@@ -442,7 +442,7 @@ class BeamCanvas(ft.Container):
         def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
                             has_negatives_y: bool = False,
                             has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None,
-                            x_label: str = "", y_label: str = "") -> None:
+                            x_label: str = "", y_label: str = "", fixed_max_x: float | None = None) -> None:
             origin_x = x
             origin_y = y + graph_height
             abscissa_y1 = origin_y
@@ -481,7 +481,10 @@ class BeamCanvas(ft.Container):
                 y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
                 
             if has_negative_x:
-                max_abs_x = max(abs(min_x), abs(max_x))
+                if fixed_max_x is not None:
+                    max_abs_x = fixed_max_x * 1.2
+                else:
+                    max_abs_x = max(abs(min_x), abs(max_x)) * 1.2
                 if max_abs_x == 0:
                     max_abs_x = 1.0
                 x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
@@ -600,8 +603,9 @@ class BeamCanvas(ft.Container):
 
             y_lbl = "y (mm)"
             x_lbl = "Shear Stress (MPa)" if i == 1 else "Bending Stress (MPa)"
+            fixed_max = self.state.max_shear_stress if i == 1 else self.state.max_bending_stress
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True, iterators[i-1], x_lbl, y_lbl)
+                            h, axis_paint, True, True, iterators[i-1], x_lbl, y_lbl, fixed_max_x=fixed_max)
         # Draw vertical line for slider cross-section position
         if self.state.beam_length > 0:
             w_beam = self.realtime_width * self.section_width_fraction - self.spacing * 2

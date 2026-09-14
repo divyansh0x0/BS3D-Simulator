@@ -159,26 +159,6 @@ class Beam:
     def get_height(self) -> float:
         pass
 
-    def generate_y_array(self, num_points: int = 200) -> np.ndarray:
-        max_y = self.get_height() / 2
-        return np.linspace(-max_y, max_y, num_points)
-
-    def get_shear_stress_distribution(self, x: float, num_points: int = 200) -> tuple[np.ndarray, np.ndarray]:
-        V = abs(self.get_shear_force(x))
-        I = self.get_second_moment_of_area()
-
-        y_points = self.generate_y_array(num_points)
-        stresses = np.zeros_like(y_points)
-
-        for i, y in enumerate(y_points):
-            Q = self.get_first_moment_of_area(abs(y))
-            b = self.get_width(y)
-
-            if b > 0:
-                stresses[i] = (V * Q) / (I * b)
-
-        return y_points, stresses
-
 class IBeam(Beam):
     def __init__(self, flange_width: float, flange_height: float, web_width: float, web_height: float, length: float):
         super().__init__("IBeam", length)
