@@ -7,7 +7,7 @@ from typing import Tuple
 
 import flet as ft
 import flet.canvas as cv
-from flet import TextAlign
+from flet import TextAlign, FontWeight
 from flet.controls import border_radius, alignment
 
 from frontend.StateManager import StateManager, PointLoadState, UDLLoadState, UVLLoadState
@@ -45,7 +45,7 @@ class BeamCanvas(ft.Container):
             on_size_change=self.update_realtime_size
         )
 
-        self.spacing = 20
+        self.spacing = 40
         self.content = ft.Column(
             controls=[
                 self.canvas_container
@@ -80,7 +80,7 @@ class BeamCanvas(ft.Container):
         beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
         cross_section_paint = ft.Paint(stroke_width=2, color="#456675", style=ft.PaintingStyle.STROKE)
         graph_paint = ft.Paint(color="#304e5c", style=ft.PaintingStyle.FILL)
-        load_paint = ft.Paint(stroke_width=3, color="#80FF0000", style=ft.PaintingStyle.FILL)
+        bold_style =ft.TextStyle(color="#FFF", size=10, weight=FontWeight.BOLD)
 
         def draw_arrow(x: float, y: float, angle: float = 0, paint=axis_paint) -> None:
             h1 = 5
@@ -432,59 +432,14 @@ class BeamCanvas(ft.Container):
 
         def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
                             has_negatives_y: bool = False,
-                            has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None) -> None:
+                            has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None,
+                            x_label: str = "", y_label: str = "") -> None:
             origin_x = x
             origin_y = y + graph_height
             abscissa_y1 = origin_y
             abscissa_y2 = origin_y - graph_height
             ordinate_x1 = origin_x
             ordinate_x2 = origin_x + graph_width
-
-            def draw_graph():
-                if not point_iterator:
-                    return
-
-                points = list(point_iterator)
-                if not points:
-                    return
-
-                min_y, max_y = min_max_y(points)
-                l = []
-
-                # Avoid division by zero if all values are zero
-                graph_spacing = 0.001
-                max_abs_y = max(abs(min_y) + graph_spacing, abs(max_y) + graph_spacing)*1.2
-                if max_abs_y == 0:
-                    max_abs_y = 1.0
-
-                if has_negatives_y:
-                    y_ratio = (abscissa_y2 - abscissa_y1) / (2 * max_abs_y)
-                else:
-                    y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
-                    
-                min_x, max_x =  min_max_x(points)
-                max_abs_x = max(abs(min_x) + graph_spacing, abs(max_x) + graph_spacing)*1.2
-
-                if has_negative_x:
-                    x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
-                else:
-                    x_ratio = (ordinate_x2 - ordinate_x1) / max_abs_x
-
-
-                l.append(cv.Path.MoveTo(origin_x, origin_y))
-                for gx, gy in points:
-                    scaled_x = origin_x + gx * x_ratio
-                    scaled_y = origin_y + gy * y_ratio
-                    l.append(cv.Path.LineTo(scaled_x, scaled_y))
-
-                l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
-                l.append(cv.Path.Close())
-
-                self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
-
-                # Draw the stroke (the actual line)
-                graph_stroke_paint = ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE)
-                self.canvas_shape_group.shapes.append(cv.Path(l, graph_stroke_paint))
 
             if has_negative_x:
                 origin_x = x + graph_width / 2
@@ -495,6 +450,62 @@ class BeamCanvas(ft.Container):
                 origin_y = y + graph_height / 2
                 abscissa_y2 = origin_y - graph_height / 2
                 abscissa_y1 = origin_y + graph_height / 2
+
+            points = []
+            if point_iterator:
+                points = list(point_iterator)
+
+            if not points:
+                min_y, max_y = 0.0, 0.0
+                min_x, max_x = 0.0, 0.0
+            else:
+                min_y, max_y = min_max_y(points)
+                min_x, max_x = min_max_x(points)
+
+            max_abs_y = max(abs(min_y), abs(max_y)) * 1.2
+            if max_abs_y == 0:
+                max_abs_y = 1.0
+
+            if has_negatives_y:
+                y_ratio = (abscissa_y2 - abscissa_y1) / (2 * max_abs_y)
+            else:
+                y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
+                
+            max_abs_x = max(abs(min_x), abs(max_x)) * 1.2
+            if max_abs_x == 0:
+                max_abs_x = 1.0
+
+            if has_negative_x:
+                x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
+            else:
+                x_ratio = (ordinate_x2 - ordinate_x1) / max_abs_x
+
+            def draw_graph():
+                if not points:
+                    return
+                l = []
+                
+                if has_negative_x:
+                    l.append(cv.Path.MoveTo(origin_x, origin_y + points[0][1] * y_ratio))
+                else:
+                    l.append(cv.Path.MoveTo(origin_x, origin_y))
+                    
+                for gx, gy in points:
+                    scaled_x = origin_x + gx * x_ratio
+                    scaled_y = origin_y + gy * y_ratio
+                    l.append(cv.Path.LineTo(scaled_x, scaled_y))
+
+                if has_negative_x:
+                    l.append(cv.Path.LineTo(origin_x, origin_y + points[-1][1] * y_ratio))
+                else:
+                    l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
+                    
+                l.append(cv.Path.Close())
+
+                self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
+
+                graph_stroke_paint = ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE)
+                self.canvas_shape_group.shapes.append(cv.Path(l, graph_stroke_paint))
 
             # draw graph first so that axes lay above it
             draw_graph()
@@ -517,6 +528,45 @@ class BeamCanvas(ft.Container):
             draw_arrow(ordinate_x2, origin_y)
             draw_arrow(origin_x, abscissa_y2, -90)
 
+            # Draw Labels and Ticks
+
+            # Axes Label at Top Left
+            self.canvas_shape_group.shapes.append(cv.Text(
+                x=ordinate_x2 - 100, y=y-self.spacing + 5, value=f"x-axis: {x_label}\ny-axis: {y_label}",
+                alignment=ft.alignment.Alignment.TOP_LEFT, style=bold_style
+            ))
+            
+            # Ticks for Y-axis
+            text_style = ft.TextStyle(color="#94A3B8", size=10)
+            num_y_ticks = 2
+            for i in range(1, num_y_ticks + 1):
+                val = max_abs_y * (i / num_y_ticks)
+                # Positive tick
+                tick_y = origin_y + val * y_ratio
+                self.canvas_shape_group.shapes.append(cv.Line(x1=origin_x - 3, y1=tick_y, x2=origin_x + 3, y2=tick_y, paint=paint))
+                self.canvas_shape_group.shapes.append(cv.Text(x=origin_x - 5, y=tick_y, value=f"{val:.1f}", alignment=ft.alignment.Alignment.CENTER_RIGHT, style=text_style))
+                
+                if has_negatives_y:
+                    # Negative tick
+                    tick_y_neg = origin_y - val * y_ratio
+                    self.canvas_shape_group.shapes.append(cv.Line(x1=origin_x - 3, y1=tick_y_neg, x2=origin_x + 3, y2=tick_y_neg, paint=paint))
+                    self.canvas_shape_group.shapes.append(cv.Text(x=origin_x - 5, y=tick_y_neg, value=f"{-val:.1f}", alignment=ft.alignment.Alignment.CENTER_RIGHT, style=text_style))
+                    
+            # Ticks for X-axis
+            num_x_ticks = 4
+            for i in range(1, num_x_ticks + 1):
+                val = max_abs_x * (i / num_x_ticks)
+                # Positive tick
+                tick_x = origin_x + val * x_ratio
+                self.canvas_shape_group.shapes.append(cv.Line(x1=tick_x, y1=origin_y - 3, x2=tick_x, y2=origin_y + 3, paint=paint))
+                self.canvas_shape_group.shapes.append(cv.Text(x=tick_x, y=origin_y + 15, value=f"{val:.1f}", alignment=ft.alignment.Alignment.TOP_CENTER, style=text_style))
+                
+                if has_negative_x:
+                    # Negative tick
+                    tick_x_neg = origin_x - val * x_ratio
+                    self.canvas_shape_group.shapes.append(cv.Line(x1=tick_x_neg, y1=origin_y - 3, x2=tick_x_neg, y2=origin_y + 3, paint=paint))
+                    self.canvas_shape_group.shapes.append(cv.Text(x=tick_x_neg, y=origin_y + 15, value=f"{-val:.1f}", alignment=ft.alignment.Alignment.TOP_CENTER, style=text_style))
+
         draw_beam()
         draw_loads()
         draw_beam_cross_section()
@@ -529,9 +579,9 @@ class BeamCanvas(ft.Container):
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
-            # Scale number of points based on the pixel width of the graphing axis
+            y_lbl = "SFD (kN)" if i == 1 else "BMD (kN·m)"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterators[i-1])
+                            h, axis_paint, True, False, iterators[i-1], "x (m)", y_lbl)
         iterators = (self.state.generate_shear_stress_points(num_points),self.state.generate_bending_stress_points(num_points))
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
@@ -539,7 +589,9 @@ class BeamCanvas(ft.Container):
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
+            y_lbl = "y (mm)"
+            x_lbl = "Shear Stress (MPa)" if i == 1 else "Bending Stress (MPa)"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True, iterators[i-1])
+                            h, axis_paint, True, True, iterators[i-1], x_lbl, y_lbl)
         draw_section_borders()
         self.canvas_shape_group.update()
