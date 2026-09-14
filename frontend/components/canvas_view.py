@@ -19,7 +19,12 @@ def min_max_y(points: list[Tuple[float, float]]) -> Tuple[float, float]:
     min_y = min(p[1] for p in points)
     max_y = max(p[1] for p in points)
     return min_y, max_y
-
+def min_max_x(points: list[Tuple[float, float]]) -> Tuple[float, float]:
+    if not points:
+        return 0.0, 0.0
+    min_x = min(p[0] for p in points)
+    max_x = max(p[0] for p in points)
+    return min_x, max_x
 
 class BeamCanvas(ft.Container):
     state: StateManager
@@ -33,12 +38,43 @@ class BeamCanvas(ft.Container):
             shapes=[],
             expand=True,
         )
+
+        def on_slider_change(e):
+            self.state.cross_section_x = float(e.control.value)
+            self.redraw()
+
+        self.cross_section_slider = ft.Slider(
+            min=0, max=max(0.1, self.state.beam_length),
+            value=self.state.cross_section_x,
+            label="Cross Section X: {value}m",
+            on_change=on_slider_change,
+            expand=True,
+        )
+        self.slider_row = ft.Row(
+            controls=[
+                ft.Text("Cross Section Position (m):"),
+                self.cross_section_slider
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        )
+
+        self.canvas_container = ft.Container(
+            content=self.canvas_shape_group,
+            expand=True,
+            on_size_change=self.update_realtime_size
+        )
+
         self.spacing = 20
-        self.content = self.canvas_shape_group
+        self.content = ft.Column(
+            controls=[
+                self.canvas_container,
+                self.slider_row
+            ],
+            expand=True
+        )
         self.section_width_fraction = 0.5
         self.section_height_fraction = 1 / 3
         self.right_section_height_fraction = 0.5
-        self.on_size_change = self.update_realtime_size
 
         self.realtime_width = 0
         self.realtime_height = 0
@@ -58,6 +94,17 @@ class BeamCanvas(ft.Container):
 
     def redraw(self) -> None:
         self.canvas_shape_group.shapes.clear()
+
+        # Sync slider with beam length changes
+        self.cross_section_slider.max = max(0.1, self.state.beam_length)
+        if self.cross_section_slider.value > self.state.beam_length:
+            self.cross_section_slider.value = self.state.beam_length
+            self.state.cross_section_x = self.state.beam_length
+        try:
+            self.slider_row.update()
+        except RuntimeError:
+            pass  # Control might not be added to page yet
+
         box_paint = ft.Paint(stroke_width=2, color="#aaa", style=ft.PaintingStyle.STROKE)
         axis_paint = ft.Paint(stroke_width=2, color="#34b1eb", style=ft.PaintingStyle.STROKE)
         beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
@@ -100,13 +147,13 @@ class BeamCanvas(ft.Container):
 
         def draw_loads():
             from frontend.StateManager import PointLoadState, UDLLoadState
-            
+
             # Find the absolute maximum load for scaling
             max_load = 0.001
             for l in self.state.loads:
-                if isinstance(l, PointLoadState): 
+                if isinstance(l, PointLoadState):
                     max_load = max(max_load, abs(l.magnitude_kn))
-                elif isinstance(l, UDLLoadState): 
+                elif isinstance(l, UDLLoadState):
                     max_load = max(max_load, abs(l.intensity_kn_m))
                 elif hasattr(l, 'start_intensity_kn_m'):
                     max_load = max(max_load, abs(l.start_intensity_kn_m), abs(l.end_intensity_kn_m))
@@ -119,35 +166,42 @@ class BeamCanvas(ft.Container):
 
             def get_px_h(value: float) -> float:
                 return (abs(value) / max_load) * max_px_h * math.copysign(1, value)
-                
+
             def get_text_align(is_downward: bool, pos_fraction: float):
                 if is_downward:
-                    if pos_fraction <= 0.01: return alignment.Alignment.BOTTOM_LEFT
-                    elif pos_fraction >= 0.99: return alignment.Alignment.BOTTOM_RIGHT
-                    else: return alignment.Alignment.BOTTOM_CENTER
+                    if pos_fraction <= 0.01:
+                        return alignment.Alignment.BOTTOM_LEFT
+                    elif pos_fraction >= 0.99:
+                        return alignment.Alignment.BOTTOM_RIGHT
+                    else:
+                        return alignment.Alignment.BOTTOM_CENTER
                 else:
-                    if pos_fraction <= 0.01: return alignment.Alignment.TOP_LEFT
-                    elif pos_fraction >= 0.99: return alignment.Alignment.TOP_RIGHT
-                    else: return alignment.Alignment.TOP_CENTER
+                    if pos_fraction <= 0.01:
+                        return alignment.Alignment.TOP_LEFT
+                    elif pos_fraction >= 0.99:
+                        return alignment.Alignment.TOP_RIGHT
+                    else:
+                        return alignment.Alignment.TOP_CENTER
 
-            def draw_point_load(value_kN: float, pos_meters: float, write_text=True, color="#EF4444", is_reaction=False):
+            def draw_point_load(value_kN: float, pos_meters: float, write_text=True, color="#EF4444",
+                                is_reaction=False):
                 if value_kN == 0.0 or self.state.beam_length <= 0: return
-                
+
                 x = self.spacing + (pos_meters / self.state.beam_length) * self.get_rendered_beam_length()
-                
+
                 if is_reaction:
                     # Reactions get a fixed visual height that doesn't scale with load magnitudes
                     h = (max_px_h * 0.75) * math.copysign(1, value_kN)
                 else:
                     h = get_px_h(value_kN)
-                
+
                 # Beam top/bottom y-coordinates
                 beam_top = (self.realtime_height * self.section_height_fraction - beam_h) / 2
                 beam_bottom = beam_top + beam_h
-                
+
                 fraction = pos_meters / max(self.state.beam_length, 0.01)
                 align = get_text_align(h > 0, fraction)
-                
+
                 if h > 0:
                     y2 = beam_top
                     y1 = y2 - h
@@ -161,8 +215,11 @@ class BeamCanvas(ft.Container):
 
                 local_paint = ft.Paint(stroke_width=2, color=color, style=ft.PaintingStyle.STROKE)
                 self.canvas_shape_group.shapes.append(cv.Line(x1=x, y1=y1, x2=x, y2=y2, paint=local_paint))
-                draw_arrow(x, y2, arrow_angle, local_paint)
-                
+
+                # Only draw the arrowhead if the shaft is longer than the arrowhead itself (15px)
+                if abs(h) >= 15 or is_reaction:
+                    draw_arrow(x, y2, arrow_angle, local_paint)
+
                 if write_text:
                     self.canvas_shape_group.shapes.append(cv.Text(
                         x=x, y=text_y, value=f"{abs(value_kN):.2f}kN",
@@ -172,20 +229,20 @@ class BeamCanvas(ft.Container):
 
             def draw_uvl(val_start: float, val_end: float, pos_start: float, pos_end: float):
                 if (val_start == 0.0 and val_end == 0.0) or self.state.beam_length <= 0: return
-                
+
                 x1 = self.spacing + (pos_start / self.state.beam_length) * self.get_rendered_beam_length()
                 x2 = self.spacing + (pos_end / self.state.beam_length) * self.get_rendered_beam_length()
                 w = max(1.0, x2 - x1)
-                
+
                 h_start = get_px_h(val_start)
                 h_end = get_px_h(val_end)
-                
+
                 beam_top = (self.realtime_height * self.section_height_fraction - beam_h) / 2
                 beam_bottom = beam_top + beam_h
-                
+
                 # Determine sign assumption (assuming a UVL doesn't cross the beam)
                 dominant_val = val_start if abs(val_start) >= abs(val_end) else val_end
-                
+
                 if dominant_val > 0:
                     y1_base = beam_top
                     y2_base = beam_top
@@ -210,7 +267,7 @@ class BeamCanvas(ft.Container):
                         cv.Path.Close()
                     ], paint=fill_paint
                 ))
-                
+
                 # Draw boundary lines and text
                 outline_paint = ft.Paint(stroke_width=1, color="#EF4444", style=ft.PaintingStyle.STROKE)
                 self.canvas_shape_group.shapes.append(cv.Path(
@@ -222,7 +279,7 @@ class BeamCanvas(ft.Container):
                         cv.Path.Close()
                     ], paint=outline_paint
                 ))
-                
+
                 # Draw a few arrows inside to show direction
                 arrow_spacing = 30
                 num_arrows = int(w / arrow_spacing)
@@ -230,11 +287,11 @@ class BeamCanvas(ft.Container):
                     fraction = i / max(1, num_arrows)
                     val = val_start + (val_end - val_start) * fraction
                     pos = pos_start + (pos_end - pos_start) * fraction
-                    
+
                     # Don't draw internal arrows if the height is smaller than the arrowhead (15px)
                     if abs(get_px_h(val)) > 15:
                         draw_point_load(val, pos, False, color="#88EF4444")
-                    
+
                 if val_start != 0:
                     fraction_start = pos_start / max(self.state.beam_length, 0.01)
                     align_start = get_text_align(dominant_val > 0, fraction_start)
@@ -260,11 +317,13 @@ class BeamCanvas(ft.Container):
                     draw_uvl(l.intensity_kn_m, l.intensity_kn_m, l.start_position_m, l.end_position_m)
                 elif isinstance(l, UVLLoadState):
                     draw_uvl(l.start_intensity_kn_m, l.end_intensity_kn_m, l.start_position_m, l.end_position_m)
-                    
+
             # Draw reactions if they exist
             if hasattr(self.state, 'reaction_left_pos'):
-                draw_point_load(-self.state.reaction_left, self.state.reaction_left_pos, color="#22C55E", is_reaction=True)
-                draw_point_load(-self.state.reaction_right, self.state.reaction_right_pos, color="#22C55E", is_reaction=True)
+                draw_point_load(-self.state.reaction_left, self.state.reaction_left_pos, color="#22C55E",
+                                is_reaction=True)
+                draw_point_load(-self.state.reaction_right, self.state.reaction_right_pos, color="#22C55E",
+                                is_reaction=True)
 
         def draw_section_borders():
             xb1 = 0
@@ -401,7 +460,8 @@ class BeamCanvas(ft.Container):
                         )
                     )
 
-        def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint, has_negatives_y: bool = False,
+        def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
+                            has_negatives_y: bool = False,
                             has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None) -> None:
             origin_x = x
             origin_y = y + graph_height
@@ -418,37 +478,44 @@ class BeamCanvas(ft.Container):
                 if not points:
                     return
 
-                min_val, max_val = min_max_y(points)
+                min_y, max_y = min_max_y(points)
                 l = []
-                if has_negative_x:
-                    max_abs_x = max((abs(p[0]) for p in points), default=1.0)
-                    if max_abs_x == 0: max_abs_x = 1.0
-                    x_ratio = (ordinate_x2 - origin_x) / max_abs_x
-                else:
-                    x_ratio = (ordinate_x2 - ordinate_x1) / max(self.state.beam_length, 1.0)
 
                 # Avoid division by zero if all values are zero
-                graph_spacing = 2
-                max_abs_y = max(abs(min_val) + graph_spacing, abs(max_val) + graph_spacing)
+                graph_spacing = 0.001
+                max_abs_y = max(abs(min_y) + graph_spacing, abs(max_y) + graph_spacing)
                 if max_abs_y == 0:
                     max_abs_y = 1.0
 
-                y_ratio = (abscissa_y2 - origin_y) / max_abs_y
+                if has_negatives_y:
+                    y_ratio = (abscissa_y2 - abscissa_y1) / (2 * max_abs_y)
+                else:
+                    y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
+                    
+                min_x, max_x =  min_max_x(points)
+                max_abs_x = max(abs(min_x) + graph_spacing, abs(max_x) + graph_spacing)
+
+                if has_negative_x:
+                    x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
+                else:
+                    x_ratio = (ordinate_x2 - ordinate_x1) / max_abs_x
+
 
                 l.append(cv.Path.MoveTo(origin_x, origin_y))
                 for gx, gy in points:
                     scaled_x = origin_x + gx * x_ratio
                     scaled_y = origin_y + gy * y_ratio
                     l.append(cv.Path.LineTo(scaled_x, scaled_y))
-                
-                if has_negative_x:
-                    l.append(cv.Path.LineTo(origin_x, origin_y))
-                else:
-                    l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
-                    
+
+                print(points)
+                l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
                 l.append(cv.Path.Close())
 
                 self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
+
+                # Draw the stroke (the actual line)
+                graph_stroke_paint = ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE)
+                self.canvas_shape_group.shapes.append(cv.Path(l, graph_stroke_paint))
 
             if has_negative_x:
                 origin_x = x + graph_width / 2
@@ -505,13 +572,15 @@ class BeamCanvas(ft.Container):
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
-            
+
             num_points = max(10, int(w))
             if i == 1:
                 iterator = self.state.generate_shear_stress_points(num_points)
+                global_max_x = getattr(self.state, 'max_shear_stress', None)
             else:
                 iterator = self.state.generate_bending_stress_points(num_points)
-                
+                global_max_x = getattr(self.state, 'max_bending_stress', None)
+
             draw_graph_axes(x, y, w,
                             h, axis_paint, True, True, iterator)
         draw_section_borders()
