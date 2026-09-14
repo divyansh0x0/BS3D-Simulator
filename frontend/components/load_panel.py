@@ -74,18 +74,43 @@ class LoadPanel(ft.Container):
         self.opacity = 1
         self.update()
 
-    async def confirm_load(self) -> None:
-        load_data: Dict[str, Any] = {"type": self.current_load_type}
-        for control in self.load_content.controls:
-            if isinstance(control, ft.TextField):
-                val: str = control.value.strip() if control.value else ""
-                label: str = control.label if control.label else "Unknown"
-                try:
-                    load_data[label] = float(val) if val else 0.0
-                except ValueError:
-                    load_data[label] = 0.0
+    async def confirm_load(self, e: Any) -> None:
+        from frontend.StateManager import PointLoadState, UDLLoadState, UVLLoadState
+        
+        load_obj = None
 
-        self.state.loads.append(load_data)
+        if self.current_load_type == "Point":
+            mag = pos = 0.0
+            for control in self.load_content.controls:
+                if isinstance(control, ft.TextField):
+                    val = float(control.value) if control.value else 0.0
+                    if "Magnitude" in control.label: mag = val
+                    elif "Position" in control.label: pos = val
+            load_obj = PointLoadState(magnitude_kn=mag, position_m=pos)
+            
+        elif self.current_load_type == "UDL":
+            intensity = start_pos = end_pos = 0.0
+            for control in self.load_content.controls:
+                if isinstance(control, ft.TextField):
+                    val = float(control.value) if control.value else 0.0
+                    if "Intensity" in control.label: intensity = val
+                    elif "Start Position" in control.label: start_pos = val
+                    elif "End Position" in control.label: end_pos = val
+            load_obj = UDLLoadState(intensity_kn_m=intensity, start_position_m=start_pos, end_position_m=end_pos)
+            
+        elif self.current_load_type == "UVL":
+            start_int = end_int = start_pos = end_pos = 0.0
+            for control in self.load_content.controls:
+                if isinstance(control, ft.TextField):
+                    val = float(control.value) if control.value else 0.0
+                    if "Start Intensity" in control.label: start_int = val
+                    elif "End Intensity" in control.label: end_int = val
+                    elif "Start Position" in control.label: start_pos = val
+                    elif "End Position" in control.label: end_pos = val
+            load_obj = UVLLoadState(start_intensity_kn_m=start_int, end_intensity_kn_m=end_int, start_position_m=start_pos, end_position_m=end_pos)
+
+        if load_obj:
+            self.state.loads.append(load_obj)
         
         if self.on_load_confirmed:
             self.on_load_confirmed()

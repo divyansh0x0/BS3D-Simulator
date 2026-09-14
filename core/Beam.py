@@ -3,7 +3,7 @@ from typing import Literal, Callable, TypeAlias, override
 import numpy as np
 
 # 1. Custom Type Aliases
-BeamType = Literal["Rectangular", "Circular", "I-Beam"]
+BeamType = Literal["Rectangular", "Circular", "IBeam"]
 LoadType = Literal["Point", "UDL", "UVL"]
 
 LoadFunction = Callable[[float], float]
@@ -181,7 +181,7 @@ class Beam:
 
 class IBeam(Beam):
     def __init__(self, flange_width: float, flange_height: float, web_width: float, web_height: float, length: float):
-        super().__init__("I-Beam", length)
+        super().__init__("IBeam", length)
         self.flange_w: float = flange_width
         self.flange_h: float = flange_height
         self.web_w: float = web_width
