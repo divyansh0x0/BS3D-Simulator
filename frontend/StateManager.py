@@ -91,8 +91,7 @@ class StateManager:
     
     reaction_left: float
     reaction_right: float
-    sfd_points: List[Tuple[float, float]]
-    bmd_points: List[Tuple[float, float]]
+    _beam: Optional[Beam]
 
     def __init__(self) -> None:
         self.beam_type = None
@@ -107,8 +106,7 @@ class StateManager:
         
         self.reaction_left = 0.0
         self.reaction_right = 0.0
-        self.sfd_points = []
-        self.bmd_points = []
+        self._beam = None
 
     def solve(self) -> None:
         """
@@ -171,15 +169,22 @@ class StateManager:
         beam.update_loads()
         self.reaction_left = beam.reaction_left.magnitude
         self.reaction_right = beam.reaction_right.magnitude
+        self._beam = beam
 
-        self.sfd_points = []
-        self.bmd_points = []
-        num_points = 100
-        if self.beam_length > 0:
-            dx = self.beam_length / num_points
-            for i in range(num_points + 1):
-                x = i * dx
-                sf = beam.get_shear_force(x)
-                bm = beam.get_bending_moment(x)
-                self.sfd_points.append((x, sf))
-                self.bmd_points.append((x, bm))
+    def generate_sfd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+        import collections.abc
+        if not self._beam or self.beam_length <= 0:
+            return
+        dx = self.beam_length / num_points
+        for i in range(num_points + 1):
+            x = i * dx
+            yield (x, self._beam.get_shear_force(x))
+
+    def generate_bmd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+        import collections.abc
+        if not self._beam or self.beam_length <= 0:
+            return
+        dx = self.beam_length / num_points
+        for i in range(num_points + 1):
+            x = i * dx
+            yield (x, self._beam.get_bending_moment(x))
