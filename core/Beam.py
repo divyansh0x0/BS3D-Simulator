@@ -156,6 +156,31 @@ class Beam:
             reaction_moment_right = self.reaction_right.magnitude * (x - self.reaction_right.position)
             return reaction_moment_left + reaction_moment_right - sum_moments
 
+    def get_width(self, y: float) -> float:
+        pass
+
+    def get_height(self) -> float:
+        pass
+
+    def generate_y_array(self, num_points: int = 200) -> np.ndarray:
+        max_y = self.get_height() / 2
+        return np.linspace(-max_y, max_y, num_points)
+
+    def get_shear_stress_distribution(self, x: float, num_points: int = 200) -> tuple[np.ndarray, np.ndarray]:
+        V = abs(self.get_shear_force(x))
+        I = self.get_second_moment_of_area()
+
+        y_points = self.generate_y_array(num_points)
+        stresses = np.zeros_like(y_points)
+
+        for i, y in enumerate(y_points):
+            Q = self.get_first_moment_of_area(abs(y))
+            b = self.get_width(y)
+
+            if b > 0:
+                stresses[i] = (V * Q) / (I * b)
+
+        return y_points, stresses
 
 class IBeam(Beam):
     def __init__(self, flange_width: float, flange_height: float, web_width: float, web_height: float, length: float):
@@ -183,3 +208,64 @@ class IBeam(Beam):
                     (h1 / 2 - self.flange_h) ** 2 - y ** 2)
         else:
             return self.flange_w / 2 * (h1 / 2 - y) ** 2
+
+    @override
+    def get_width(self, y: float) -> float:
+        if abs(y) <= self.web_h / 2:
+            return self.web_w
+        else:
+            return self.flange_w
+
+    @override
+    def get_height(self) -> float:
+        return self.flange_h * 2 + self.web_h
+
+class RectangularBeam(Beam):
+    def __init__(self, height: float, width: float, length: float):
+        super().__init__("Rectangular", length)
+        self.height: float = height
+        self.width: float = width
+
+    @override
+    def get_second_moment_of_area(self) -> float:
+        h = self.height
+        w = self.width
+        return (w * h ** 3) / 12
+
+    @override
+    def get_first_moment_of_area(self, y: float) -> float:
+        h = self.height
+        w = self.width
+        return (h ** 2 / 4 - y ** 2) * w / 2
+
+    @override
+    def get_width(self, y: float) -> float:
+        return self.width
+
+    @override
+    def get_height(self) -> float:
+        return self.height
+
+class CircularBeam(Beam):
+    def __init__(self, diameter: float, length: float):
+        super().__init__("Circular", length)
+        self.diameter: float = diameter
+
+    @override
+    def get_second_moment_of_area(self) -> float:
+        d = self.diameter
+        return (np.pi * d ** 4) / 64
+
+    @override
+    def get_first_moment_of_area(self, y: float) -> float:
+        d = self.diameter
+        return ((d ** 2 / 4 - y ** 2) ** 1.5) * 2 / 3
+
+    @override
+    def get_width(self, y: float) -> float:
+        r = self.diameter / 2
+        return 2 * np.sqrt(max(0, r ** 2 - y ** 2))
+
+    @override
+    def get_height(self) -> float:
+        return self.diameter
