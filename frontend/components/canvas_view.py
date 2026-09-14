@@ -29,7 +29,7 @@ def min_max_x(points: list[Tuple[float, float]]) -> Tuple[float, float]:
     return min_x, max_x
 
 
-class BeamCanvas(ft.Container):
+class CanvasView(ft.Container):
     state: StateManager
     canvas_shape_group: cv.Canvas
 
@@ -128,9 +128,6 @@ class BeamCanvas(ft.Container):
             ))
 
         def draw_loads():
-            from frontend.StateManager import PointLoadState, UDLLoadState, UVLLoadState
-
-            # Find the absolute maximum load for scaling
             max_load = 0.001
             for l in self.state.loads:
                 if isinstance(l, PointLoadState):
@@ -444,7 +441,8 @@ class BeamCanvas(ft.Container):
 
         def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
                             has_negatives_y: bool = False,
-                            has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None, marker_point: Tuple[float, float] | None = None,
+                            has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None,
+                            marker_point: Tuple[float, float] | None = None,
                             x_label: str = "", y_label: str = "",
                             fixed_max_x: float | None = None) -> None:
             origin_x = x
@@ -548,7 +546,7 @@ class BeamCanvas(ft.Container):
 
             # Axes Label at Top Left
             self.canvas_shape_group.shapes.append(cv.Text(
-                x=ordinate_x2 - 100, y=y - self.spacing + 5, value=f"x-axis: {x_label}\ny-axis: {y_label}",
+                x=ordinate_x2 - 40, y=y - self.spacing + 5, value=f"x-axis: {x_label}\ny-axis: {y_label}",
                 alignment=ft.alignment.Alignment.TOP_LEFT, style=bold_style
             ))
 
@@ -600,16 +598,20 @@ class BeamCanvas(ft.Container):
                 return
             point_paint = ft.Paint(color=ft.Colors.PRIMARY)
             self.canvas_shape_group.shapes.append(
-                cv.Circle(x=origin_x + marker_point[0]*x_ratio, y=origin_y + marker_point[1]*y_ratio, radius=4, paint=point_paint))
+                cv.Circle(x=origin_x + marker_point[0] * x_ratio, y=origin_y + marker_point[1] * y_ratio, radius=4,
+                          paint=point_paint))
 
+            mx = origin_x + marker_point[0] * x_ratio + 5
+            my = origin_y + marker_point[1] * y_ratio - 12
+            self.canvas_shape_group.shapes.append(
+                cv.Text(value=f"{marker_point[1]:.2f}", x=mx, y=origin_y + 12,
+                        alignment=ft.alignment.Alignment.CENTER_LEFT,
+                        style=bold_style))
 
             self.canvas_shape_group.shapes.append(
-                cv.Text(value=f"{marker_point[1]:.2f}", x=origin_x + marker_point[0] * x_ratio + 5, y=origin_y + 10, alignment=ft.alignment.Alignment.CENTER_LEFT,
-                          style=bold_style))
-
-            self.canvas_shape_group.shapes.append(
-                cv.Text(value=f"{marker_point[1]:.2f}", x=origin_x + marker_point[0] * x_ratio + 5, y=origin_y + marker_point[1] * y_ratio + 5, alignment=ft.alignment.Alignment.CENTER_LEFT,
-                          style=bold_style))
+                    cv.Text(value=f"{marker_point[1]:.2f}", x=mx,
+                            y=my, alignment=ft.alignment.Alignment.CENTER_LEFT,
+                            style=bold_style))
 
         draw_beam()
         draw_loads()
@@ -628,7 +630,7 @@ class BeamCanvas(ft.Container):
 
             y_lbl = "kN" if i == 1 else "kN·m"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterators[i - 1],marked_points[i - 1], "m", y_lbl)
+                            h, axis_paint, True, False, iterators[i - 1], marked_points[i - 1], "m", y_lbl)
         iterators = (self.state.generate_shear_stress_points(num_points),
                      self.state.generate_bending_stress_points(num_points))
         for i in range(1, 3):

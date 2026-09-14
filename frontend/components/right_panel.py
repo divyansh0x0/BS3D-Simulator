@@ -24,6 +24,7 @@ class RightPanel(ft.Container):
             min=0, max=max(0.1, self.state.beam_length),
             value=self.state.cross_section_x,
             label="Cross Section X: {value}m",
+            round=2,
             on_change=on_slider_change,
         )
 

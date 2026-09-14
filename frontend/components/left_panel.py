@@ -14,7 +14,6 @@ class LeftPanel(ft.Container):
     material_type: ft.Dropdown
     load_type: ft.Dropdown
     beam_length_input: ft.TextField
-    solve_button: ft.Button
 
     def __init__(self, state: StateManager, on_canvas_redraw: Callable[[], None], on_load_type_change: Callable[[str], Coroutine[Any, Any, None]]) -> None:
         super().__init__()
@@ -23,7 +22,7 @@ class LeftPanel(ft.Container):
         self.on_load_type_change = on_load_type_change
         
         self.expand = 1
-        self.bgcolor = ft.Colors.SURFACE_CONTAINER_LOW
+        self.bgcolor = ft.Colors.SURFACE_CONTAINER
         self.padding = 15
 
         self.dimension_content = ft.Column(
@@ -83,14 +82,6 @@ class LeftPanel(ft.Container):
             on_change=self.update_beam_length,expand=True
         )
 
-        self.solve_button = ft.Button(
-            "Calculate SFD & BMD",
-            on_click=self.on_solve_click,
-            bgcolor=ft.Colors.TERTIARY,
-            color=ft.Colors.ON_TERTIARY,
-            height=45,expand=True
-        )
-
         self.content = ft.Column(
             controls=[
                 ft.Text("Beam Controls", color=ft.Colors.ON_SURFACE, size=20, weight=ft.FontWeight.BOLD),
@@ -102,16 +93,11 @@ class LeftPanel(ft.Container):
                 self.load_type,
                 ft.Text("Active Loads", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
                 self.load_list_view,
-                self.solve_button,
             ],
             spacing=12,
             scroll=ft.ScrollMode.AUTO,
         )
         self.refresh_load_list(do_update=False)
-    def on_solve_click(self, e: Any) -> None:
-        self.state.solve()
-        if self.on_canvas_redraw:
-            self.on_canvas_redraw()
 
     async def change_material(self, e: Any) -> None:
         from frontend.StateManager import MaterialType
@@ -228,8 +214,8 @@ class LeftPanel(ft.Container):
                 self.state.beam_length = float(val)
                 # Update roller support position
                 for sup in self.state.supports:
-                    if sup.get("type") == "Roller":
-                        sup["position"] = self.state.beam_length
+                    if sup.support_type == "Roller":
+                        sup.position = self.state.beam_length
                 if self.on_canvas_redraw:
                     self.on_canvas_redraw()
         except ValueError:

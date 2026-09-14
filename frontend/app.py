@@ -1,5 +1,5 @@
 import flet as ft
-from frontend.components.canvas_view import BeamCanvas
+from frontend.components.canvas_view import CanvasView
 from frontend.components.left_panel import LeftPanel
 from frontend.components.load_panel import LoadPanel
 from frontend.StateManager import StateManager
@@ -16,7 +16,7 @@ def app(page: ft.Page) -> None:
     state: StateManager = StateManager()
 
     # Initialize Components
-    beam_canvas: BeamCanvas = BeamCanvas(state)
+    beam_canvas: CanvasView = CanvasView(state)
 
     current_val_text = ft.Text(f"{state.cross_section_x:.2f}m", color=ft.Colors.PRIMARY, weight=ft.FontWeight.BOLD, width=60)
 
@@ -31,10 +31,11 @@ def app(page: ft.Page) -> None:
         beam_canvas.update_vertical_line(val)
 
     cross_section_slider = ft.Slider(
-        min=0, max=max(0.1, state.beam_length),
+        min=0, max=max(0,state.beam_length),
         value=state.cross_section_x,
         label="{value}m",
-        divisions=100,
+        round=2,
+        divisions=1000,
         on_change=on_slider_move,
         on_change_end=on_slider_change,
         expand=True,
@@ -54,7 +55,7 @@ def app(page: ft.Page) -> None:
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         ),
-        bgcolor=ft.Colors.SURFACE_CONTAINER_LOWEST,
+        bgcolor=ft.Colors.SURFACE_CONTAINER,
         padding=10,
     )
 
@@ -73,6 +74,7 @@ def app(page: ft.Page) -> None:
             pass
 
     def on_state_change() -> None:
+        state.solve()
         beam_canvas.redraw()
         refresh_slider()
 
@@ -97,6 +99,15 @@ def app(page: ft.Page) -> None:
                 controls=[
                     beam_canvas,
                     load_panel,
+                    ft.FloatingActionButton(
+                        icon=ft.Icons.PLAY_ARROW,
+
+                        on_click=lambda e: on_state_change(),
+                        bgcolor=ft.Colors.TERTIARY,
+                        foreground_color=ft.Colors.ON_TERTIARY,
+                        top=20,
+                        right=20,
+                    ),
                 ],
                 expand=True,
             ),
