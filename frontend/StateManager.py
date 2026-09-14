@@ -237,8 +237,10 @@ class StateManager:
         
         y_points = self._beam.generate_y_array(num_points)
         for y in y_points:
-            stress = (M * float(y)) / I
-            yield float(stress), float(y)
+            stress_kpa = (M * float(y)) / I
+            stress_mpa = stress_kpa / 1000.0
+            y_mm = float(y) * 1000.0
+            yield stress_mpa, y_mm
 
     def generate_shear_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
         if not self._beam or self.beam_length <= 0:
@@ -247,4 +249,6 @@ class StateManager:
         target_x = min(max(0.0, self.cross_section_x), self.beam_length)
         y_points, stresses = self._beam.get_shear_stress_distribution(target_x, num_points)
         for y, stress in zip(y_points, stresses):
-            yield float(stress), float(y)
+            stress_mpa = float(stress) / 1000.0
+            y_mm = float(y) * 1000.0
+            yield stress_mpa, y_mm

@@ -39,6 +39,15 @@ class BeamCanvas(ft.Container):
             expand=True,
         )
 
+        self.slider_line_shape = cv.Line(
+            x1=0, y1=0, x2=0, y2=0,
+            paint=ft.Paint(stroke_width=2, color="#EAB308", style=ft.PaintingStyle.STROKE)
+        )
+        self.slider_text_shape = cv.Text(
+            x=0, y=0, value="",
+            style=ft.TextStyle(color="#EAB308", size=12, weight=ft.FontWeight.BOLD)
+        )
+
         self.canvas_container = ft.Container(
             content=self.canvas_shape_group,
             expand=True,
@@ -80,7 +89,7 @@ class BeamCanvas(ft.Container):
         beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
         cross_section_paint = ft.Paint(stroke_width=2, color="#456675", style=ft.PaintingStyle.STROKE)
         graph_paint = ft.Paint(color="#304e5c", style=ft.PaintingStyle.FILL)
-        bold_style =ft.TextStyle(color="#FFF", size=10, weight=FontWeight.BOLD)
+        bold_style =ft.TextStyle(color="#FFF", size=10)
 
         def draw_arrow(x: float, y: float, angle: float = 0, paint=axis_paint) -> None:
             h1 = 5
@@ -341,7 +350,7 @@ class BeamCanvas(ft.Container):
                 width=w,
                 height=h,
                 border_radius=5,
-                paint=beam_paint
+                paint=graph_paint
             ))
             self.canvas_shape_group.shapes.append(cv.Rect(
                 x=x1,
@@ -349,7 +358,7 @@ class BeamCanvas(ft.Container):
                 width=w,
                 height=h,
                 border_radius=5,
-                paint=box_paint
+                paint=ft.Paint(stroke_width=2, color="#5bc0de", style=ft.PaintingStyle.STROKE),
             ))
 
         def draw_beam_cross_section():
@@ -471,13 +480,13 @@ class BeamCanvas(ft.Container):
             else:
                 y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
                 
-            max_abs_x = max(abs(min_x), abs(max_x)) * 1.2
-            if max_abs_x == 0:
-                max_abs_x = 1.0
-
             if has_negative_x:
+                max_abs_x = max(abs(min_x), abs(max_x))
+                if max_abs_x == 0:
+                    max_abs_x = 1.0
                 x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
             else:
+                max_abs_x = max(self.state.beam_length, 0.001)
                 x_ratio = (ordinate_x2 - ordinate_x1) / max_abs_x
 
             def draw_graph():
@@ -593,5 +602,35 @@ class BeamCanvas(ft.Container):
             x_lbl = "Shear Stress (MPa)" if i == 1 else "Bending Stress (MPa)"
             draw_graph_axes(x, y, w,
                             h, axis_paint, True, True, iterators[i-1], x_lbl, y_lbl)
+        # Draw vertical line for slider cross-section position
+        if self.state.beam_length > 0:
+            w_beam = self.realtime_width * self.section_width_fraction - self.spacing * 2
+            slider_pixel_x = self.spacing + (self.state.cross_section_x / self.state.beam_length) * w_beam
+            
+            self.slider_line_shape.x1 = slider_pixel_x
+            self.slider_line_shape.x2 = slider_pixel_x
+            self.slider_line_shape.y1 = 0
+            self.slider_line_shape.y2 = self.realtime_height
+
+            self.slider_text_shape.x = slider_pixel_x + 5
+            self.slider_text_shape.y = 10
+            self.slider_text_shape.value = f"x = {self.state.cross_section_x:.2f}m"
+
+            self.canvas_shape_group.shapes.append(self.slider_line_shape)
+            self.canvas_shape_group.shapes.append(self.slider_text_shape)
+
         draw_section_borders()
         self.canvas_shape_group.update()
+
+    def update_vertical_line(self, new_x: float) -> None:
+        if self.state.beam_length > 0:
+            w_beam = self.realtime_width * self.section_width_fraction - self.spacing * 2
+            slider_pixel_x = self.spacing + (new_x / self.state.beam_length) * w_beam
+            
+            self.slider_line_shape.x1 = slider_pixel_x
+            self.slider_line_shape.x2 = slider_pixel_x
+            
+            self.slider_text_shape.x = slider_pixel_x + 5
+            self.slider_text_shape.value = f"x = {new_x:.2f}m"
+            
+            self.canvas_shape_group.update()

@@ -16,23 +16,39 @@ def app(page: ft.Page) -> None:
     # Initialize Components
     beam_canvas: BeamCanvas = BeamCanvas(state)
 
+    current_val_text = ft.Text(f"{state.cross_section_x:.2f}m", color="#EAB308", weight=ft.FontWeight.BOLD, width=60)
+
     def on_slider_change(e):
         state.cross_section_x = float(e.control.value)
         beam_canvas.redraw()
 
+    def on_slider_move(e):
+        val = float(e.control.value)
+        current_val_text.value = f"{val:.2f}m"
+        current_val_text.update()
+        beam_canvas.update_vertical_line(val)
+
     cross_section_slider = ft.Slider(
         min=0, max=max(0.1, state.beam_length),
         value=state.cross_section_x,
-        label="Cross Section X: {value}m",
-        on_change=on_slider_change,
+        label="{value}m",
+        divisions=100,
+        on_change=on_slider_move,
+        on_change_end=on_slider_change,
         expand=True,
     )
     
+    min_label = ft.Text("0.00m", color="#94A3B8", size=12)
+    max_label = ft.Text(f"{max(0.1, state.beam_length):.2f}m", color="#94A3B8", size=12)
+
     slider_row = ft.Container(
         content=ft.Row(
             controls=[
-                ft.Text("Cross Section Position (m):", color="#F8FAFC"),
-                cross_section_slider
+                ft.Text("Cross Section Position:", color="#F8FAFC"),
+                current_val_text,
+                min_label,
+                cross_section_slider,
+                max_label
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         ),
@@ -45,8 +61,12 @@ def app(page: ft.Page) -> None:
         if cross_section_slider.value > state.beam_length:
             cross_section_slider.value = state.beam_length
             state.cross_section_x = state.beam_length
+        current_val_text.value = f"{state.cross_section_x:.2f}m"
+        max_label.value = f"{max(0.1, state.beam_length):.2f}m"
         try:
             cross_section_slider.update()
+            current_val_text.update()
+            max_label.update()
         except RuntimeError:
             pass
 
