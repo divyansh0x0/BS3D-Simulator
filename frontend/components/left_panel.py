@@ -84,6 +84,14 @@ class LeftPanel(ft.Container):
 
         self.content = ft.Column(
             controls=[
+                ft.Row(
+                    controls=[
+                        ft.Icon(ft.Icons.ARCHITECTURE, color=ft.Colors.PRIMARY, size=28),
+                        ft.Text("BS3D", color=ft.Colors.PRIMARY, size=24, weight=ft.FontWeight.W_900),
+                    ],
+                    alignment=ft.MainAxisAlignment.START,
+                ),
+                ft.Divider(height=20, color=ft.Colors.OUTLINE_VARIANT),
                 ft.Text("Beam Controls", color=ft.Colors.ON_SURFACE, size=20, weight=ft.FontWeight.BOLD),
                 self.beam_length_input,
                 ft.Text("Beam Section", color=ft.Colors.ON_SURFACE_VARIANT, size=12),
