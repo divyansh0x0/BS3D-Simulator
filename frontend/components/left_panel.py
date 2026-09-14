@@ -112,31 +112,43 @@ class LeftPanel(ft.Container):
         from frontend.StateManager import RectangularDimensions
         if isinstance(self.state.beam_dimensions, RectangularDimensions):
             self.state.beam_dimensions.width_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_rect_height(self, e: Any) -> None:
         from frontend.StateManager import RectangularDimensions
         if isinstance(self.state.beam_dimensions, RectangularDimensions):
             self.state.beam_dimensions.height_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_circ_diameter(self, e: Any) -> None:
         from frontend.StateManager import CircularDimensions
         if isinstance(self.state.beam_dimensions, CircularDimensions):
             self.state.beam_dimensions.diameter_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_ibeam_height(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
             self.state.beam_dimensions.height_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_ibeam_flange_width(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
             self.state.beam_dimensions.flange_width_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_ibeam_flange_thickness(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
             self.state.beam_dimensions.flange_thickness_mm = self._parse_float(e.control.value)
+        if self.on_canvas_redraw:
+            self.on_canvas_redraw()
 
     def update_ibeam_web_thickness(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
