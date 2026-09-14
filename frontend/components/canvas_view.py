@@ -429,7 +429,7 @@ class CanvasView(ft.Container):
                             paint=cross_section_paint,
                         )
                     )
-            
+
             if self.state._beam is not None:
                 real_height = self.state._beam.get_height()
                 if real_height > 0:
@@ -445,10 +445,11 @@ class CanvasView(ft.Container):
                     else:
                         pixel_height = diameter
                         pixel_width = diameter
-                    
+
                     y_offset_px = (self.state.cross_section_y_meters / real_height) * pixel_height
                     line_y = center_y
 
+                    # neutral axis
                     self.canvas_shape_group.shapes.append(cv.Line(
                         x1=center_x - pixel_width / 2 - 10,
                         y1=line_y,
@@ -456,27 +457,34 @@ class CanvasView(ft.Container):
                         y2=line_y,
                         paint=ft.Paint(stroke_width=2, color=ft.Colors.TERTIARY, style=ft.PaintingStyle.STROKE)
                     ))
+                    self.canvas_shape_group.shapes.append(cv.Text(
+                        value=f"Neutral Axis",
+                        x=center_x,
+                        y=line_y - 5,
+                        alignment=ft.Alignment.BOTTOM_CENTER,
+                        style=ft.TextStyle(size=12, color=ft.Colors.SECONDARY)
+                    ))
+                    # line parallel to neutral axis
                     self.canvas_shape_group.shapes.append(cv.Line(
-                        x1=center_x - section_width/2,
-                        y1=line_y-y_offset_px,
-                        x2=center_x + section_width/2,
-                        y2=line_y-y_offset_px,
+                        x1=center_x - section_width / 2,
+                        y1=line_y - y_offset_px,
+                        x2=center_x + section_width / 2,
+                        y2=line_y - y_offset_px,
                         paint=ft.Paint(stroke_width=2, color=ft.Colors.SECONDARY, style=ft.PaintingStyle.STROKE)
                     ))
                     self.canvas_shape_group.shapes.append(cv.Text(
                         value=f"y={self.state.cross_section_y_meters * 1000:.2f}mm",
-                        x=center_x - section_width/2+10,
+                        x=center_x - section_width / 2 + 10,
                         y=line_y - y_offset_px - 5,
                         alignment=ft.Alignment.BOTTOM_LEFT,
                         style=ft.TextStyle(size=12, color=ft.Colors.SECONDARY)
                     ))
 
-
         def draw_graph_axes(x: float, y: float, graph_width: float, graph_height: float, paint,
                             has_negatives_y: bool = False,
                             has_negative_x=False, point_iterator: Iterator[Tuple[float, float]] | None = None,
                             marker_point: Tuple[float, float] | None = None,
-                            x_label: str = "", y_label: str = "",
+                            x_label: str = "", y_label: str = "", graph_name: str = "",
                             fixed_max_x: float | None = None) -> None:
             origin_x = x
             origin_y = y + graph_height
@@ -580,12 +588,13 @@ class CanvasView(ft.Container):
             # Axes Label at Top Left
             self.canvas_shape_group.shapes.append(cv.Text(
                 x=ordinate_x2 - 40, y=y - self.spacing + 5, value=f"x-axis: {x_label}\ny-axis: {y_label}",
-                alignment=ft.alignment.Alignment.TOP_LEFT, style=bold_style
+                alignment=ft.alignment.Alignment.TOP_LEFT, style=ft.TextStyle(color=ft.Colors.TERTIARY, size=12),
             ))
 
             # Ticks for Y-axis
             text_style = ft.TextStyle(color=ft.Colors.ON_SURFACE_VARIANT, size=10)
-            num_y_ticks = 2
+            # 100 pixel wide tick count
+            num_y_ticks = int((ordinate_x2 - ordinate_x1) / 100)
             for i in range(1, num_y_ticks + 1):
                 val = max_abs_y * (i / num_y_ticks)
                 # Positive tick
@@ -606,7 +615,8 @@ class CanvasView(ft.Container):
                                                                   style=text_style))
 
             # Ticks for X-axis
-            num_x_ticks = 4
+            # 100 pixel wide tick count
+            num_x_ticks = int((ordinate_x2 - ordinate_x1)/100)
             for i in range(1, num_x_ticks + 1):
                 val = max_abs_x * (i / num_x_ticks)
                 # Positive tick
@@ -625,7 +635,9 @@ class CanvasView(ft.Container):
                     self.canvas_shape_group.shapes.append(cv.Text(x=tick_x_neg, y=origin_y + 15, value=f"{-val:.1f}",
                                                                   alignment=ft.alignment.Alignment.TOP_CENTER,
                                                                   style=text_style))
-
+            if graph_name:
+                self.canvas_shape_group.shapes.append(
+                    cv.Text(x=x-self.spacing/2, y=y-12, value=graph_name, alignment=ft.Alignment.BOTTOM_LEFT, style=ft.TextStyle(size=16, color=ft.Colors.ON_SURFACE)))
             # marking for current cross section
             if not marker_point:
                 return
@@ -633,18 +645,21 @@ class CanvasView(ft.Container):
             self.canvas_shape_group.shapes.append(
                 cv.Circle(x=origin_x + marker_point[0] * x_ratio, y=origin_y + marker_point[1] * y_ratio, radius=4,
                           paint=point_paint))
+            self.canvas_shape_group.shapes.append(
+                cv.Circle(x=origin_x + marker_point[0] * x_ratio, y=origin_y, radius=4,
+                          paint=point_paint))
 
             mx = origin_x + marker_point[0] * x_ratio + 5
             my = origin_y + marker_point[1] * y_ratio - 12
             self.canvas_shape_group.shapes.append(
                 cv.Text(value=f"{marker_point[0]:.2f}", x=mx, y=origin_y + 12,
                         alignment=ft.alignment.Alignment.CENTER_LEFT,
-                        style=bold_style))
+                        style=ft.TextStyle(size=13, color=ft.Colors.SECONDARY)))
 
             self.canvas_shape_group.shapes.append(
-                    cv.Text(value=f"{marker_point[1]:.2f}", x=mx,
-                            y=my, alignment=ft.alignment.Alignment.CENTER_LEFT,
-                            style=bold_style))
+                cv.Text(value=f"{marker_point[1]:.2f}", x=mx,
+                        y=my, alignment=ft.alignment.Alignment.CENTER_LEFT,
+                        style=ft.TextStyle(size=13, color=ft.Colors.SECONDARY)))
 
         draw_beam()
         draw_loads()
@@ -663,12 +678,15 @@ class CanvasView(ft.Container):
 
             y_lbl = "kN" if i == 1 else "kN·m"
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterators[i - 1], sfd_bmd_marked_points[i - 1], "m", y_lbl)
+                            h, axis_paint, True, False, iterators[i - 1], sfd_bmd_marked_points[i - 1], "m", y_lbl,
+                            "SFD" if i == 1 else "BMD")
         iterators = (self.state.generate_shear_stress_points(num_points),
                      self.state.generate_bending_stress_points(num_points))
 
         y_mm = self.state.cross_section_y_meters * 1000.0
-        bending_stress_and_shear_stress_marked_points =  ((self.state.get_shear_stress(self.state.cross_section_y_meters), y_mm), (self.state.get_bending_stress(self.state.cross_section_y_meters), y_mm))
+        bending_stress_and_shear_stress_marked_points = (
+            (self.state.get_shear_stress(self.state.cross_section_y_meters), y_mm),
+            (self.state.get_bending_stress(self.state.cross_section_y_meters), y_mm))
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
@@ -679,7 +697,9 @@ class CanvasView(ft.Container):
             x_lbl = "MPa"
             fixed_max = self.state.max_shear_stress if i == 1 else self.state.max_bending_stress
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True, iterators[i - 1], bending_stress_and_shear_stress_marked_points[i-1], x_lbl, y_lbl, fixed_max_x=fixed_max)
+                            h, axis_paint, True, True, iterators[i - 1],
+                            bending_stress_and_shear_stress_marked_points[i - 1], x_lbl, y_lbl,
+                            "Shear Stress" if i == 1 else "Bending Stress", fixed_max_x=fixed_max)
 
         slider_line_shape = cv.Line(
             x1=0, y1=0, x2=0, y2=0,

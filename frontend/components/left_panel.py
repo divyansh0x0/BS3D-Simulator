@@ -29,8 +29,8 @@ class LeftPanel(ft.Container):
             spacing=10,
             controls=[
                 ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-                ft.TextField(label="Width (mm)", value="100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
-                ft.TextField(label="Height (mm)", value="100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
+                ft.TextField(label="Width (mm)", value=str(self.state.beam_dimensions.width_mm) if hasattr(self.state.beam_dimensions, 'width_mm') else "100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
+                ft.TextField(label="Height (mm)", value=str(self.state.beam_dimensions.height_mm) if hasattr(self.state.beam_dimensions, 'height_mm') else "100.0", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
             ]
         )
         self.dimensions_container = ft.Container(
@@ -111,56 +111,79 @@ class LeftPanel(ft.Container):
         elif selected == "Wood":
             self.state.material_type = MaterialType.WOOD
 
-    def _parse_float(self, val: str) -> float:
-        try: return float(val)
-        except ValueError: return 0.0
+    def _parse_float(self, control: ft.TextField) -> float:
+        val = str(control.value).strip() if control.value else ""
+        control.error_text = None
+        if not val:
+            control.error_text = "Required"
+            control.update()
+            return 0.0
+        try:
+            parsed = float(val)
+            if parsed <= 0:
+                control.error_text = "Must be > 0"
+                control.update()
+                return 0.0
+            control.update()
+            return parsed
+        except ValueError:
+            control.error_text = "Invalid"
+            control.update()
+            return 0.0
 
     def update_rect_width(self, e: Any) -> None:
         from frontend.StateManager import RectangularDimensions
         if isinstance(self.state.beam_dimensions, RectangularDimensions):
-            self.state.beam_dimensions.width_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.width_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_rect_height(self, e: Any) -> None:
         from frontend.StateManager import RectangularDimensions
         if isinstance(self.state.beam_dimensions, RectangularDimensions):
-            self.state.beam_dimensions.height_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.height_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_circ_diameter(self, e: Any) -> None:
         from frontend.StateManager import CircularDimensions
         if isinstance(self.state.beam_dimensions, CircularDimensions):
-            self.state.beam_dimensions.diameter_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.diameter_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_ibeam_height(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
-            self.state.beam_dimensions.height_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.height_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_ibeam_flange_width(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
-            self.state.beam_dimensions.flange_width_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.flange_width_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_ibeam_flange_thickness(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
-            self.state.beam_dimensions.flange_thickness_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.flange_thickness_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
     def update_ibeam_web_thickness(self, e: Any) -> None:
         from frontend.StateManager import IBeamDimensions
         if isinstance(self.state.beam_dimensions, IBeamDimensions):
-            self.state.beam_dimensions.web_thickness_mm = self._parse_float(e.control.value)
+            val = self._parse_float(e.control)
+            if val > 0: self.state.beam_dimensions.web_thickness_mm = val
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
@@ -176,31 +199,37 @@ class LeftPanel(ft.Container):
         self.dimension_content.controls.clear()
 
         if selected_beam == "I-Beam":
-            self.state.beam_dimensions = IBeamDimensions()
+            if not isinstance(self.state.beam_dimensions, IBeamDimensions):
+                self.state.beam_dimensions = IBeamDimensions()
+            d = self.state.beam_dimensions
             self.dimension_content.controls.extend(
                 [
                     ft.Text("I-Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-                    ft.TextField(label="Height (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_height),
-                    ft.TextField(label="Flange Width (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_width),
-                    ft.TextField(label="Flange Thickness (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_thickness),
-                    ft.TextField(label="Web Thickness (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_web_thickness),
+                    ft.TextField(label="Height (mm)", value=str(d.height_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_height),
+                    ft.TextField(label="Flange Width (mm)", value=str(d.flange_width_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_width),
+                    ft.TextField(label="Flange Thickness (mm)", value=str(d.flange_thickness_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_flange_thickness),
+                    ft.TextField(label="Web Thickness (mm)", value=str(d.web_thickness_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_ibeam_web_thickness),
                 ]
             )
         elif selected_beam == "Rectangular":
-            self.state.beam_dimensions = RectangularDimensions()
+            if not isinstance(self.state.beam_dimensions, RectangularDimensions):
+                self.state.beam_dimensions = RectangularDimensions()
+            d = self.state.beam_dimensions
             self.dimension_content.controls.extend(
                 [
                     ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-                    ft.TextField(label="Width (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
-                    ft.TextField(label="Height (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
+                    ft.TextField(label="Width (mm)", value=str(d.width_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_width),
+                    ft.TextField(label="Height (mm)", value=str(d.height_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_rect_height),
                 ]
             )
         elif selected_beam == "Circular":
-            self.state.beam_dimensions = CircularDimensions()
+            if not isinstance(self.state.beam_dimensions, CircularDimensions):
+                self.state.beam_dimensions = CircularDimensions()
+            d = self.state.beam_dimensions
             self.dimension_content.controls.extend(
                 [
                     ft.Text("Circular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color=ft.Colors.ON_SURFACE),
-                    ft.TextField(label="Diameter (mm)", height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_circ_diameter),
+                    ft.TextField(label="Diameter (mm)", value=str(d.diameter_mm), height=40, color=ft.Colors.ON_SURFACE, on_change=self.update_circ_diameter),
                 ]
             )
         self.dimensions_container.opacity = 1
@@ -209,19 +238,30 @@ class LeftPanel(ft.Container):
             self.on_canvas_redraw()
     async def update_beam_length(self, e: Any) -> None:
         val: str = str(e.control.value).strip() if e.control.value else ""
+        e.control.error_text = None
+        if not val:
+            e.control.error_text = "Required"
+            e.control.update()
+            return
+            
         try:
-            if val:
-                self.state.beam_length = float(val)
-                # Update roller support position
-                for sup in self.state.supports:
-                    if sup.support_type == "Roller":
-                        sup.position = self.state.beam_length
-                if self.on_canvas_redraw:
-                    self.on_canvas_redraw()
+            length = float(val)
+            if length <= 0:
+                e.control.error_text = "Must be > 0"
+                e.control.update()
+                return
+                
+            self.state.beam_length = length
+            # Update roller support position
+            for sup in self.state.supports:
+                if sup.support_type == "Roller":
+                    sup.position = self.state.beam_length
+            if self.on_canvas_redraw:
+                self.on_canvas_redraw()
+            e.control.update()
         except ValueError:
-            pass
-        if self.on_canvas_redraw:
-            self.on_canvas_redraw()
+            e.control.error_text = "Invalid number"
+            e.control.update()
 
     async def change_load_handler(self, e: Any) -> None:
         selected_load: str = str(e.control.value) if e.control.value else ""
