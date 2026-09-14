@@ -37,7 +37,7 @@ jobs:
         run: pip install flet
 
       - name: Build web
-        run: echo "y" | flet build web
+        run: echo "y" | flet build web --base-url /BS3D-Simulator/
 
       - uses: actions/upload-pages-artifact@v3
         with:
