@@ -19,7 +19,6 @@ class LoadPanel(ft.Container):
         self.border = ft.Border.all(1, "#334155")
         self.border_radius = 10
         self.padding = 12
-        self.width = 230
         self.bgcolor = "#1E293B"
         self.opacity = 0
         self.animate_opacity = 150
@@ -38,45 +37,44 @@ class LoadPanel(ft.Container):
             self.load_content.controls.extend(
                 [
                     ft.Text("Point Load Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Load Magnitude (kN)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Load Position (m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Load Magnitude (kN)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Load Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
         elif selected_load == "UDL":
             self.load_content.controls.extend(
                 [
                     ft.Text("UDL Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Load Intensity (kN/m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Start Position (m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Position (m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Load Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Start Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
         elif selected_load == "UVL":
             self.load_content.controls.extend(
                 [
                     ft.Text("UVL Parameters", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Start Intensity (kN/m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Intensity (kN/m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="Start Position (m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
-                    ft.TextField(label="End Position (m)", width=200, height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Start Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Intensity (kN/m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="Start Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
+                    ft.TextField(label="End Position (m)", height=40, color="#F8FAFC", keyboard_type=ft.KeyboardType.NUMBER),
                 ]
             )
 
         if selected_load:
             self.load_content.controls.append(
-                ft.ElevatedButton(
+                ft.Button(
                     "Confirm Load",
                     on_click=self.confirm_load,
                     bgcolor="#2563EB",
                     color="#FFFFFF",
-                    width=200,
                 )
             )
 
         self.opacity = 1
         self.update()
 
-    async def confirm_load(self, e: Any) -> None:
+    async def confirm_load(self) -> None:
         load_data: Dict[str, Any] = {"type": self.current_load_type}
         for control in self.load_content.controls:
             if isinstance(control, ft.TextField):

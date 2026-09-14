@@ -21,20 +21,20 @@ class LeftPanel(ft.Container):
         self.on_canvas_redraw = on_canvas_redraw
         self.on_load_type_change = on_load_type_change
         
-        self.width = 260
+        self.expand = 1
         self.bgcolor = "#0F172A"
         self.padding = 15
 
         self.dimension_content = ft.Column(spacing=10)
         self.dimensions_container = ft.Container(
-            content=self.dimension_content, opacity=0, animate_opacity=150
+            content=self.dimension_content, opacity=0, animate_opacity=150,
+            expand=True
         )
 
         self.load_list_view = ft.Column(spacing=5)
 
         self.beam_type = ft.Dropdown(
             label="Select Beam Type",
-            width=210,
             options=[
                 ft.dropdown.Option("Rectangular"),
                 ft.dropdown.Option("Circular"),
@@ -46,11 +46,11 @@ class LeftPanel(ft.Container):
             border_radius=8,
             text_style=ft.TextStyle(color="#F8FAFC"),
             on_select=self.change_dimensions,
+            expand=True
         )
 
         self.load_type = ft.Dropdown(
             label="Select Load Type",
-            width=210,
             options=[
                 ft.dropdown.Option("Point"),
                 ft.dropdown.Option("UDL"),
@@ -61,7 +61,7 @@ class LeftPanel(ft.Container):
             focused_border_color="#2563EB",
             border_radius=8,
             text_style=ft.TextStyle(color="#F8FAFC"),
-            on_select=self.change_load_handler,
+            on_select=self.change_load_handler,expand=True
         )
 
         
@@ -69,10 +69,9 @@ class LeftPanel(ft.Container):
         self.beam_length_input = ft.TextField(
             label="Beam Length (m)",
             value="10.0",
-            width=210,
             height=40,
             color="#F8FAFC",
-            on_change=self.update_beam_length,
+            on_change=self.update_beam_length,expand=True
         )
 
         self.solve_button = ft.Button(
@@ -80,8 +79,7 @@ class LeftPanel(ft.Container):
             on_click=self.on_solve_click,
             bgcolor="#22C55E",
             color="#FFFFFF",
-            width=210,
-            height=45,
+            height=45,expand=True
         )
 
         self.content = ft.Column(
@@ -123,32 +121,31 @@ class LeftPanel(ft.Container):
 
         self.dimensions_container.opacity = 0
         self.dimensions_container.update()
-        await asyncio.sleep(0.15)
         self.dimension_content.controls.clear()
 
         if selected_beam == "I-Beam":
             self.dimension_content.controls.extend(
                 [
                     ft.Text("I-Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Height (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
-                    ft.TextField(label="Flange Width (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
-                    ft.TextField(label="Flange Thickness (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
-                    ft.TextField(label="Web Thickness (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Height (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Flange Width (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Flange Thickness (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Web Thickness (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
                 ]
             )
         elif selected_beam == "Rectangular":
             self.dimension_content.controls.extend(
                 [
                     ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Width (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
-                    ft.TextField(label="Height (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Width (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Height (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
                 ]
             )
         elif selected_beam == "Circular":
             self.dimension_content.controls.extend(
                 [
                     ft.Text("Circular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
-                    ft.TextField(label="Diameter (mm)", width=210, height=40, color="#F8FAFC", on_change=self.update_dimension),
+                    ft.TextField(label="Diameter (mm)", height=40, color="#F8FAFC", on_change=self.update_dimension),
                 ]
             )
         self.dimensions_container.opacity = 1

@@ -31,13 +31,12 @@ def app(page: ft.Page) -> None:
         on_load_type_change=on_load_type_change,
     )
 
-    # Main viewport combining Canvas layer and floating Load inputs
     center_viewport: ft.Stack = ft.Stack(
         controls=[
             beam_canvas,
             load_panel,
         ],
-        expand=True,
+        expand=3,
     )
 
     page.add(
