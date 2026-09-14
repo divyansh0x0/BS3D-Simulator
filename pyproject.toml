@@ -6,9 +6,13 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "flet>=0.86.5",
-    "flet-charts>=0.86.5",
-    "kaleido>=1.4.0",
-    "numpy>=2.5.2",
-    "pandas>=3.0.5",
-    "plotly>=7.0.0",
 ]
+[tool.flet]
+app_title = "BS3D-Simulator"
+
+[tool.flet.windows]
+product_name = "BS3D-Simulator"
+product_version = "1.0.0"
+
+[tool.flet.linux]
+desktop_flavor = "light"
