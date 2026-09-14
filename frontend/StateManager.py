@@ -197,3 +197,49 @@ class StateManager:
         for i in range(num_points + 1):
             x = i * dx
             yield (x, self._beam.get_bending_moment(x))
+
+    def generate_bending_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+        import collections.abc
+        if not self._beam or self.beam_length <= 0:
+            return
+        
+        # Find x with maximum absolute bending moment
+        dx = self.beam_length / 100
+        max_m_abs = -1
+        max_x = 0
+        for i in range(101):
+            x = i * dx
+            m = abs(self._beam.get_bending_moment(x))
+            if m > max_m_abs:
+                max_m_abs = m
+                max_x = x
+                
+        M = self._beam.get_bending_moment(max_x)
+        I = self._beam.get_second_moment_of_area()
+        if I == 0:
+            return
+        
+        y_points = self._beam.generate_y_array(num_points)
+        for y in y_points:
+            stress = (M * float(y)) / I
+            yield (float(stress), float(y))
+
+    def generate_shear_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+        import collections.abc
+        if not self._beam or self.beam_length <= 0:
+            return
+        
+        # Find x with maximum absolute shear force
+        dx = self.beam_length / 100
+        max_v_abs = -1
+        max_x = 0
+        for i in range(101):
+            x = i * dx
+            v = abs(self._beam.get_shear_force(x))
+            if v > max_v_abs:
+                max_v_abs = v
+                max_x = x
+                
+        y_points, stresses = self._beam.get_shear_stress_distribution(max_x, num_points)
+        for y, stress in zip(y_points, stresses):
+            yield (float(stress), float(y))

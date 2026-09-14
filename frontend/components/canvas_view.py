@@ -420,7 +420,12 @@ class BeamCanvas(ft.Container):
 
                 min_val, max_val = min_max_y(points)
                 l = []
-                x_ratio = (ordinate_x2 - ordinate_x1) / max(self.state.beam_length, 1.0)
+                if has_negative_x:
+                    max_abs_x = max((abs(p[0]) for p in points), default=1.0)
+                    if max_abs_x == 0: max_abs_x = 1.0
+                    x_ratio = (ordinate_x2 - origin_x) / max_abs_x
+                else:
+                    x_ratio = (ordinate_x2 - ordinate_x1) / max(self.state.beam_length, 1.0)
 
                 # Avoid division by zero if all values are zero
                 graph_spacing = 2
@@ -435,7 +440,12 @@ class BeamCanvas(ft.Container):
                     scaled_x = origin_x + gx * x_ratio
                     scaled_y = origin_y + gy * y_ratio
                     l.append(cv.Path.LineTo(scaled_x, scaled_y))
-                l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
+                
+                if has_negative_x:
+                    l.append(cv.Path.LineTo(origin_x, origin_y))
+                else:
+                    l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
+                    
                 l.append(cv.Path.Close())
 
                 self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
@@ -495,7 +505,14 @@ class BeamCanvas(ft.Container):
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
+            
+            num_points = max(10, int(w))
+            if i == 1:
+                iterator = self.state.generate_shear_stress_points(num_points)
+            else:
+                iterator = self.state.generate_bending_stress_points(num_points)
+                
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True)
+                            h, axis_paint, True, True, iterator)
         draw_section_borders()
         self.canvas_shape_group.update()
