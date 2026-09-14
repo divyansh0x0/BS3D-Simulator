@@ -1,3 +1,4 @@
+import collections
 from typing import Any, List, Optional, Tuple, Union
 from dataclasses import dataclass
 import numpy as np
@@ -94,15 +95,17 @@ class StateManager:
     _beam: Optional[Beam]
 
     def __init__(self) -> None:
-        self.beam_type = None
-        self.material_type = None
+        self.beam_type = "Rectangular"
+        self.material_type = MaterialType.STEEL
         self.beam_length = 10.0
-        self.beam_dimensions = None
+        self.beam_dimensions = RectangularDimensions()
         self.supports = [
             SupportState("Pin", 0.0),
             SupportState("Roller", 10.0),
         ]
-        self.loads = []
+        self.loads = [
+            PointLoadState(magnitude_kn=10.0, position_m=5.0)
+        ]
         
         self.reaction_left = 0.0
         self.reaction_right = 0.0

@@ -51,6 +51,4 @@ def app(page: ft.Page) -> None:
         )
     )
 
-    beam_canvas.redraw()
-
 

@@ -1,12 +1,24 @@
 import math
+from collections.abc import Iterator
+from itertools import tee
 from numbers import Number
 from turtledemo.chaos import h
+from typing import Tuple
 
 import flet as ft
 import flet.canvas as cv
-from flet.controls import border_radius
+from flet import TextAlign
+from flet.controls import border_radius, alignment
 
-from frontend.StateManager import StateManager
+from frontend.StateManager import StateManager, PointLoadState
+
+
+def min_max_y(points: list[Tuple[float, float]]) -> Tuple[float, float]:
+    if not points:
+        return 0.0, 0.0
+    min_y = min(p[1] for p in points)
+    max_y = max(p[1] for p in points)
+    return min_y, max_y
 
 
 class BeamCanvas(ft.Container):
@@ -38,26 +50,35 @@ class BeamCanvas(ft.Container):
         print(self.realtime_width, self.realtime_height)
         self.redraw()
 
+    def get_rendered_beam_length(self) -> float:
+        return self.realtime_width * self.section_width_fraction - self.spacing * 2
+
+    def get_beam_height(self) -> float:
+        return 50.0
+
     def redraw(self) -> None:
         self.canvas_shape_group.shapes.clear()
         box_paint = ft.Paint(stroke_width=2, color="#aaa", style=ft.PaintingStyle.STROKE)
         axis_paint = ft.Paint(stroke_width=2, color="#34b1eb", style=ft.PaintingStyle.STROKE)
         beam_paint = ft.Paint(stroke_width=2, color="#999", style=ft.PaintingStyle.FILL)
         cross_section_paint = ft.Paint(stroke_width=2, color="#456675", style=ft.PaintingStyle.STROKE)
+        graph_paint = ft.Paint(color="#304e5c", style=ft.PaintingStyle.FILL)
+        load_paint = ft.Paint(stroke_width=3,color="#d1896d", style=ft.PaintingStyle.FILL)
 
-        def draw_arrow(x: float, y: float, angle:float = 0) -> None:
-            w1 = 30
-            h1 = 10
-            x1 = x-w1
+        def draw_arrow(x: float, y: float, angle: float = 0, paint=axis_paint) -> None:
+            h1 = 5
+            w1 = 3*h1
+            x1 = x - w1
             y1 = y + h1 / 2
-            x2 = x-w1
+            x2 = x - w1
             y2 = y - h1 / 2
 
-            def transform(__x:float, __y:float, __cx:float, __cy:float, angle:float):
+            def transform(__x: float, __y: float, __cx: float, __cy: float, angle: float):
                 angle_rad = angle * math.pi / 180
                 rx = (__x - __cx) * math.cos(angle_rad) - (__y - __cy) * math.sin(angle_rad) + __cx
                 ry = (__x - __cx) * math.sin(angle_rad) + (__y - __cy) * math.cos(angle_rad) + __cy
                 return rx, ry
+
             tx1, ty1 = transform(x1, y1, x, y, angle)
             tx2, ty2 = transform(x2, y2, x, y, angle)
 
@@ -66,7 +87,7 @@ class BeamCanvas(ft.Container):
                 x2=x,
                 y1=ty1,
                 y2=y,
-                paint=axis_paint
+                paint=paint
             ))
 
             self.canvas_shape_group.shapes.append(cv.Line(
@@ -74,8 +95,38 @@ class BeamCanvas(ft.Container):
                 x2=x,
                 y1=ty2,
                 y2=y,
-                paint=axis_paint
+                paint=paint
             ))
+
+        def draw_loads():
+            def draw_point_load(value, pos):
+                h = self.get_beam_height()
+                x = self.spacing + pos / self.state.beam_length * self.get_rendered_beam_length()
+                y2 = (self.realtime_height * self.section_height_fraction - h) / 2  # y end <- arrow will be here
+                y1 = y2 - h  # y start
+                self.canvas_shape_group.shapes.append(cv.Line(
+                    x1=x,
+                    y1=y1,
+                    x2=x,
+                    y2=y2,
+                    paint=load_paint
+                ))
+                self.canvas_shape_group.shapes.append(cv.Text(
+                    x=x,
+                    y=y1,
+                    value=f"{value}kN",
+                    alignment=alignment.Alignment.BOTTOM_CENTER,
+                    text_align=TextAlign.CENTER
+                ))
+                draw_arrow(x, y2, math.copysign(90, value), load_paint)
+
+            rA = self.state.reaction_left
+            rB = self.state.reaction_right
+
+            loads = list(self.state.loads)
+            for l in loads:
+                if isinstance(l, PointLoadState):
+                    draw_point_load(l.magnitude_kn, l.position_m)
 
         def draw_section_borders():
             xb1 = 0
@@ -113,8 +164,8 @@ class BeamCanvas(ft.Container):
 
         def draw_beam():
             x1 = self.spacing
-            w = self.section_width_fraction * self.realtime_width - 2 * self.spacing
-            h = 50
+            w = self.get_rendered_beam_length()
+            h = self.get_beam_height()
             y1 = (self.realtime_height * self.section_height_fraction - h) / 2
 
             self.canvas_shape_group.shapes.append(cv.Rect(
@@ -148,16 +199,22 @@ class BeamCanvas(ft.Container):
                     paint=cross_section_paint
                 ))
             elif self.state.beam_type == "Rectangular":
-                h1 = section_height - self.spacing * 2
-                w1 = section_width - self.spacing * 2
+                max_w = section_width - self.spacing * 2
+                max_h = section_height - self.spacing * 2
+                
                 from frontend.StateManager import RectangularDimensions
                 if isinstance(self.state.beam_dimensions, RectangularDimensions):
-                    aspect = self.state.beam_dimensions.width_mm / max(1.0, self.state.beam_dimensions.height_mm)
-                    if aspect > 1:
-                        h1 /= aspect
-                    else:
-                        w1 *= aspect
-
+                    w_mm = max(1.0, self.state.beam_dimensions.width_mm)
+                    h_mm = max(1.0, self.state.beam_dimensions.height_mm)
+                    
+                    # Uniform scaling factor to fit inside max_w x max_h
+                    scale = min(max_w / w_mm, max_h / h_mm)
+                    w1 = w_mm * scale
+                    h1 = h_mm * scale
+                else:
+                    w1 = min(max_w, max_h)
+                    h1 = w1
+                
                 x1 = center_x - w1 / 2
                 y1 = center_y - h1 / 2
                 self.canvas_shape_group.shapes.append(cv.Rect(
@@ -206,15 +263,42 @@ class BeamCanvas(ft.Container):
                         )
                     )
 
-        def draw_graph_axes(x: float, y: float, w: float, h: float, axis_paint, has_negatives_y=False,
-                       has_negative_x=False) -> None:
+        def draw_graph_axes(x: float, y: float, w: float, h: float, axis_paint, has_negatives_y: bool = False,
+                            has_negative_x=False, iterator: Iterator[Tuple[float, float]] | None = None) -> None:
             origin_x = x
             origin_y = y + h
             abscissa_y1 = origin_y
             abscissa_y2 = origin_y - h
             ordinate_x1 = origin_x
             ordinate_x2 = origin_x + w
+            def draw_graph():
+                if not iterator:
+                    return
 
+                points = list(iterator)
+                if not points:
+                    return
+
+                min_val, max_val = min_max_y(points)
+                l = []
+                x_ratio = (ordinate_x2 - ordinate_x1) / max(self.state.beam_length, 1.0)
+
+                # Avoid division by zero if all values are zero
+                max_abs_y = max(abs(min_val), abs(max_val))
+                if max_abs_y == 0:
+                    max_abs_y = 1.0
+
+                y_ratio = (abscissa_y2 - origin_y) / max_abs_y
+
+                l.append(cv.Path.MoveTo(origin_x, origin_y))
+                for gx, gy in points:
+                    scaled_x = origin_x + gx * x_ratio
+                    scaled_y = origin_y + gy * y_ratio
+                    l.append(cv.Path.LineTo(scaled_x, scaled_y))
+                l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
+                l.append(cv.Path.Close())
+
+                self.canvas_shape_group.shapes.append(cv.Path(l, graph_paint))
             if has_negative_x:
                 origin_x = x + w / 2
                 ordinate_x1 = origin_x - w / 2
@@ -225,6 +309,10 @@ class BeamCanvas(ft.Container):
                 abscissa_y2 = origin_y - h / 2
                 abscissa_y1 = origin_y + h / 2
 
+
+            # draw graph first so that axes lay above it
+            draw_graph()
+            # y-axis
             self.canvas_shape_group.shapes.append(cv.Line(
                 x1=origin_x,
                 y1=abscissa_y1,
@@ -232,6 +320,7 @@ class BeamCanvas(ft.Container):
                 y2=abscissa_y2,
                 paint=axis_paint,
             ))
+            # x-axis
             self.canvas_shape_group.shapes.append(cv.Line(
                 x1=ordinate_x1,
                 y1=origin_y,
@@ -242,7 +331,9 @@ class BeamCanvas(ft.Container):
             draw_arrow(ordinate_x2, origin_y)
             draw_arrow(origin_x, abscissa_y2, -90)
 
+
         draw_beam()
+        draw_loads()
         draw_beam_cross_section()
 
         for i in range(1, 3):
@@ -250,14 +341,22 @@ class BeamCanvas(ft.Container):
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
+            
+            # Scale number of points based on the pixel width of the graphing axis
+            num_points = max(10, int(w))
+            if i == 1:
+                iterator = self.state.generate_sfd_points(num_points)
+            else:
+                iterator = self.state.generate_bmd_points(num_points)
+                
             draw_graph_axes(x, y, w,
-                       h, axis_paint, False, False)
+                            h, axis_paint, True, False, iterator)
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
             draw_graph_axes(x, y, w,
-                       h, axis_paint, True, True)
+                            h, axis_paint, True, True)
         draw_section_borders()
         self.canvas_shape_group.update()

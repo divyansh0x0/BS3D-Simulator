@@ -26,9 +26,16 @@ class LeftPanel(ft.Container):
         self.bgcolor = "#0F172A"
         self.padding = 15
 
-        self.dimension_content = ft.Column(spacing=10)
+        self.dimension_content = ft.Column(
+            spacing=10,
+            controls=[
+                ft.Text("Rectangular Beam Dimensions", size=14, weight=ft.FontWeight.BOLD, color="#F8FAFC"),
+                ft.TextField(label="Width (mm)", value="100.0", height=40, color="#F8FAFC", on_change=self.update_rect_width),
+                ft.TextField(label="Height (mm)", value="100.0", height=40, color="#F8FAFC", on_change=self.update_rect_height),
+            ]
+        )
         self.dimensions_container = ft.Container(
-            content=self.dimension_content, opacity=0, animate_opacity=150,
+            content=self.dimension_content, opacity=1, animate_opacity=150,
             expand=True
         )
 
@@ -36,6 +43,7 @@ class LeftPanel(ft.Container):
 
         self.beam_type = ft.Dropdown(
             label="Select Beam Type",
+            value="Rectangular",
             options=[
                 ft.dropdown.Option("Rectangular"),
                 ft.dropdown.Option("Circular"),
@@ -85,6 +93,7 @@ class LeftPanel(ft.Container):
 
         self.material_type = ft.Dropdown(
             label="Select Material",
+            value="Steel",
             options=[
                 ft.dropdown.Option("Steel"),
                 ft.dropdown.Option("Aluminum"),
@@ -117,7 +126,7 @@ class LeftPanel(ft.Container):
             spacing=12,
             scroll=ft.ScrollMode.AUTO,
         )
-
+        self.refresh_load_list(do_update=False)
     def on_solve_click(self, e: Any) -> None:
         self.state.solve()
         if self.on_canvas_redraw:
@@ -258,7 +267,7 @@ class LeftPanel(ft.Container):
         if self.on_canvas_redraw:
             self.on_canvas_redraw()
 
-    def refresh_load_list(self) -> None:
+    def refresh_load_list(self, do_update: bool = True) -> None:
         self.load_list_view.controls.clear()
         for idx, ld in enumerate(self.state.loads):
             load_type_name: str = str(getattr(ld, 'load_type', 'Unknown'))
@@ -281,6 +290,7 @@ class LeftPanel(ft.Container):
                     ),
                 )
             )
-        self.load_list_view.update()
-        if self.on_canvas_redraw:
+        if do_update:
+            self.load_list_view.update()
+        if self.on_canvas_redraw and do_update:
             self.on_canvas_redraw()
