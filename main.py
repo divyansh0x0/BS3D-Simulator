@@ -1,17 +1,6 @@
-from core.Beam import Load
+import flet as ft
 
-def main():
-
-    l= [
-        lambda x: -2,
-        lambda x: -x**2,
-        lambda x: -x**3,
-    ]
-    for fun in l:
-        load1 = Load(0,300, fun)
-        print(load1.get_area())
-        print(load1.get_avg_value_point())
-
+from frontend import app
 
 if __name__ == "__main__":
-    main()
+    ft.app(target=app)

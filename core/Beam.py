@@ -6,7 +6,6 @@ import numpy as np
 BeamType = Literal["Rectangular", "Circular", "I-Beam"]
 LoadType = Literal["Point", "UDL", "UVL"]
 
-ArrayPair: TypeAlias = tuple[np.ndarray, np.ndarray]
 LoadFunction = Callable[[float], float]
 
 
@@ -81,8 +80,6 @@ class Load:
             return start
         return numerator / denominator
 
-
-PhysicsSolver = Callable[[list[Load]], ArrayPair]
 
 
 class Beam:
