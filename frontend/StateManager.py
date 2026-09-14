@@ -226,7 +226,6 @@ class StateManager:
             yield (x, self._beam.get_bending_moment(x))
 
     def generate_bending_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
-        import collections.abc
         if not self._beam or self.beam_length <= 0:
             return
         
@@ -242,7 +241,6 @@ class StateManager:
             yield float(stress), float(y)
 
     def generate_shear_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
-        import collections.abc
         if not self._beam or self.beam_length <= 0:
             return
         

@@ -16,9 +16,47 @@ def app(page: ft.Page) -> None:
     # Initialize Components
     beam_canvas: BeamCanvas = BeamCanvas(state)
 
+    def on_slider_change(e):
+        state.cross_section_x = float(e.control.value)
+        beam_canvas.redraw()
+
+    cross_section_slider = ft.Slider(
+        min=0, max=max(0.1, state.beam_length),
+        value=state.cross_section_x,
+        label="Cross Section X: {value}m",
+        on_change=on_slider_change,
+        expand=True,
+    )
+    
+    slider_row = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Text("Cross Section Position (m):", color="#F8FAFC"),
+                cross_section_slider
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+        bgcolor="#0F172A",
+        padding=10,
+    )
+
+    def refresh_slider():
+        cross_section_slider.max = max(0.1, state.beam_length)
+        if cross_section_slider.value > state.beam_length:
+            cross_section_slider.value = state.beam_length
+            state.cross_section_x = state.beam_length
+        try:
+            cross_section_slider.update()
+        except RuntimeError:
+            pass
+
+    def on_state_change() -> None:
+        beam_canvas.redraw()
+        refresh_slider()
+
     def on_load_confirmed() -> None:
         left_panel.refresh_load_list()
-        beam_canvas.redraw()
+        on_state_change()
 
     load_panel: LoadPanel = LoadPanel(state, on_load_confirmed)
 
@@ -27,16 +65,23 @@ def app(page: ft.Page) -> None:
 
     left_panel: LeftPanel = LeftPanel(
         state=state,
-        on_canvas_redraw=beam_canvas.redraw,
+        on_canvas_redraw=on_state_change,
         on_load_type_change=on_load_type_change,
     )
 
-    center_viewport: ft.Stack = ft.Stack(
+    center_viewport = ft.Column(
         controls=[
-            beam_canvas,
-            load_panel,
+            ft.Stack(
+                controls=[
+                    beam_canvas,
+                    load_panel,
+                ],
+                expand=True,
+            ),
+            slider_row
         ],
         expand=3,
+        spacing=0
     )
 
     page.add(

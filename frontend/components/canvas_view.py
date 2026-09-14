@@ -39,25 +39,6 @@ class BeamCanvas(ft.Container):
             expand=True,
         )
 
-        def on_slider_change(e):
-            self.state.cross_section_x = float(e.control.value)
-            self.redraw()
-
-        self.cross_section_slider = ft.Slider(
-            min=0, max=max(0.1, self.state.beam_length),
-            value=self.state.cross_section_x,
-            label="Cross Section X: {value}m",
-            on_change=on_slider_change,
-            expand=True,
-        )
-        self.slider_row = ft.Row(
-            controls=[
-                ft.Text("Cross Section Position (m):"),
-                self.cross_section_slider
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        )
-
         self.canvas_container = ft.Container(
             content=self.canvas_shape_group,
             expand=True,
@@ -67,8 +48,7 @@ class BeamCanvas(ft.Container):
         self.spacing = 20
         self.content = ft.Column(
             controls=[
-                self.canvas_container,
-                self.slider_row
+                self.canvas_container
             ],
             expand=True
         )
@@ -94,16 +74,6 @@ class BeamCanvas(ft.Container):
 
     def redraw(self) -> None:
         self.canvas_shape_group.shapes.clear()
-
-        # Sync slider with beam length changes
-        self.cross_section_slider.max = max(0.1, self.state.beam_length)
-        if self.cross_section_slider.value > self.state.beam_length:
-            self.cross_section_slider.value = self.state.beam_length
-            self.state.cross_section_x = self.state.beam_length
-        try:
-            self.slider_row.update()
-        except RuntimeError:
-            pass  # Control might not be added to page yet
 
         box_paint = ft.Paint(stroke_width=2, color="#aaa", style=ft.PaintingStyle.STROKE)
         axis_paint = ft.Paint(stroke_width=2, color="#34b1eb", style=ft.PaintingStyle.STROKE)
@@ -483,7 +453,7 @@ class BeamCanvas(ft.Container):
 
                 # Avoid division by zero if all values are zero
                 graph_spacing = 0.001
-                max_abs_y = max(abs(min_y) + graph_spacing, abs(max_y) + graph_spacing)
+                max_abs_y = max(abs(min_y) + graph_spacing, abs(max_y) + graph_spacing)*1.2
                 if max_abs_y == 0:
                     max_abs_y = 1.0
 
@@ -493,7 +463,7 @@ class BeamCanvas(ft.Container):
                     y_ratio = (abscissa_y2 - abscissa_y1) / max_abs_y
                     
                 min_x, max_x =  min_max_x(points)
-                max_abs_x = max(abs(min_x) + graph_spacing, abs(max_x) + graph_spacing)
+                max_abs_x = max(abs(min_x) + graph_spacing, abs(max_x) + graph_spacing)*1.2
 
                 if has_negative_x:
                     x_ratio = (ordinate_x2 - ordinate_x1) / (2 * max_abs_x)
@@ -507,7 +477,6 @@ class BeamCanvas(ft.Container):
                     scaled_y = origin_y + gy * y_ratio
                     l.append(cv.Path.LineTo(scaled_x, scaled_y))
 
-                print(points)
                 l.append(cv.Path.LineTo(origin_x + self.state.beam_length * x_ratio, origin_y))
                 l.append(cv.Path.Close())
 
@@ -551,7 +520,9 @@ class BeamCanvas(ft.Container):
         draw_beam()
         draw_loads()
         draw_beam_cross_section()
-
+        w = self.realtime_width * self.section_width_fraction - self.spacing * 2
+        num_points = max(10, int(w))
+        iterators = (self.state.generate_sfd_points(num_points),self.state.generate_bmd_points(num_points))
         for i in range(1, 3):
             x = self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
@@ -559,29 +530,16 @@ class BeamCanvas(ft.Container):
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
             # Scale number of points based on the pixel width of the graphing axis
-            num_points = max(10, int(w))
-            if i == 1:
-                iterator = self.state.generate_sfd_points(num_points)
-            else:
-                iterator = self.state.generate_bmd_points(num_points)
-
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, False, iterator)
+                            h, axis_paint, True, False, iterators[i-1])
+        iterators = (self.state.generate_shear_stress_points(num_points),self.state.generate_bending_stress_points(num_points))
         for i in range(1, 3):
             x = self.realtime_width * self.section_width_fraction + self.spacing
             h = self.realtime_height * self.section_height_fraction - self.spacing * 2
             y = self.realtime_height * self.section_height_fraction * i + self.spacing
             w = self.realtime_width * self.section_width_fraction - self.spacing * 2
 
-            num_points = max(10, int(w))
-            if i == 1:
-                iterator = self.state.generate_shear_stress_points(num_points)
-                global_max_x = getattr(self.state, 'max_shear_stress', None)
-            else:
-                iterator = self.state.generate_bending_stress_points(num_points)
-                global_max_x = getattr(self.state, 'max_bending_stress', None)
-
             draw_graph_axes(x, y, w,
-                            h, axis_paint, True, True, iterator)
+                            h, axis_paint, True, True, iterators[i-1])
         draw_section_borders()
         self.canvas_shape_group.update()
