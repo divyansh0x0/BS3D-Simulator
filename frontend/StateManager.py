@@ -220,11 +220,11 @@ class StateManager:
 
             original_x = self.cross_section_x
             self.cross_section_x = max_v_x
-            
+
             stresses = [stress for stress, y in self.generate_shear_stress_points(50)]
             if len(stresses) > 0:
                 self.max_shear_stress = max(1e-9, float(max(abs(s) for s in stresses)))
-                
+
             self.cross_section_x = original_x
 
     def generate_sfd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
@@ -283,3 +283,14 @@ class StateManager:
             stress_mpa = float(stress_kpa) / 1000.0
             y_mm = float(y) * 1000.0
             yield stress_mpa, y_mm
+
+    def get_shear_force(self, cross_section_x):
+        if self._beam is not None:
+            return self._beam.get_shear_force(cross_section_x)
+        else:
+            return 0
+    def get_bending_moment(self, cross_section_x):
+            if self._beam is not None:
+                return self._beam.get_bending_moment(cross_section_x)
+            else:
+                return 0

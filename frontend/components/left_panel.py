@@ -91,31 +91,12 @@ class LeftPanel(ft.Container):
             height=45,expand=True
         )
 
-        self.material_type = ft.Dropdown(
-            label="Select Material",
-            value="Steel",
-            options=[
-                ft.dropdown.Option("Steel"),
-                ft.dropdown.Option("Aluminum"),
-                ft.dropdown.Option("Concrete"),
-                ft.dropdown.Option("Wood"),
-            ],
-            bgcolor="#0F172A",
-            border_color="#334155",
-            focused_border_color="#2563EB",
-            border_radius=8,
-            text_style=ft.TextStyle(color="#F8FAFC"),
-            on_select=self.change_material,
-            expand=True
-        )
-
         self.content = ft.Column(
             controls=[
                 ft.Text("Beam Controls", color="#F8FAFC", size=20, weight=ft.FontWeight.BOLD),
                 self.beam_length_input,
                 ft.Text("Beam Section", color="#94A3B8", size=12),
                 self.beam_type,
-                self.material_type,
                 self.dimensions_container,
                 ft.Text("Load Setup", color="#94A3B8", size=12),
                 self.load_type,
