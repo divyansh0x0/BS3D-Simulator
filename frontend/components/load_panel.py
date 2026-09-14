@@ -63,15 +63,30 @@ class LoadPanel(ft.Container):
 
         if selected_load:
             self.load_content.controls.append(
-                ft.Button(
-                    "Confirm Load",
-                    on_click=self.confirm_load,
-                    bgcolor=ft.Colors.PRIMARY,
-                    color=ft.Colors.ON_PRIMARY,
+                ft.Row(
+                    controls=[
+                        ft.Button(
+                            "Confirm Load",
+                            on_click=self.confirm_load,
+                            bgcolor=ft.Colors.PRIMARY,
+                            color=ft.Colors.ON_PRIMARY,
+                        ),
+                        ft.Button(
+                            "Cancel",
+                            on_click=self.cancel_load,
+                            bgcolor=ft.Colors.ERROR,
+                            color=ft.Colors.ON_ERROR,
+                        ),
+                    ],
+                    spacing=10
                 )
             )
 
         self.opacity = 1
+        self.update()
+
+    async def cancel_load(self, e: Any) -> None:
+        self.opacity = 0
         self.update()
 
     async def confirm_load(self, e: Any) -> None:

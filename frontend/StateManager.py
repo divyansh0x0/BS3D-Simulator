@@ -1,5 +1,5 @@
 import collections
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union, Iterator
 from dataclasses import dataclass
 import numpy as np
 
@@ -228,8 +228,7 @@ class StateManager:
 
             self.cross_section_x = original_x
 
-    def generate_sfd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
-        import collections.abc
+    def generate_sfd_points(self, num_points: int = 100) -> Iterator[Tuple[float, float]]:
         if not self._beam or self.beam_length <= 0:
             return
         dx = self.beam_length / num_points
@@ -237,8 +236,7 @@ class StateManager:
             x = i * dx
             yield x, self._beam.get_shear_force(x)
 
-    def generate_bmd_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
-        import collections.abc
+    def generate_bmd_points(self, num_points: int = 100) -> Iterator[Tuple[float, float]]:
         if not self._beam or self.beam_length <= 0:
             return
         dx = self.beam_length / num_points
@@ -246,7 +244,7 @@ class StateManager:
             x = i * dx
             yield x, self._beam.get_bending_moment(x)
 
-    def generate_bending_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+    def generate_bending_stress_points(self, num_points: int = 100) -> Iterator[Tuple[float, float]]:
         if not self._beam or self.beam_length <= 0:
             return
 
@@ -266,7 +264,7 @@ class StateManager:
             y_mm = float(y) * 1000.0
             yield stress_mpa, y_mm
 
-    def generate_shear_stress_points(self, num_points: int = 100) -> 'collections.abc.Iterator[Tuple[float, float]]':
+    def generate_shear_stress_points(self, num_points: int = 100) ->Iterator[Tuple[float, float]]:
         if not self._beam or self.beam_length <= 0:
             return
 
@@ -279,7 +277,10 @@ class StateManager:
             y = y_start + i * y_step
             Q = self._beam.get_first_moment_of_area(y)
             b = self._beam.get_width(y)
-            stress_kpa = (V * Q) / (I * b)
+            if b == 0.0 or I == 0.0:
+                stress_kpa = 0.0
+            else:
+                stress_kpa = (V * Q) / (I * b)
 
             stress_mpa = float(stress_kpa) / 1000.0
             y_mm = float(y) * 1000.0
@@ -305,7 +306,10 @@ class StateManager:
         y = cross_section_y
         Q = self._beam.get_first_moment_of_area(y)
         b = self._beam.get_width(y)
-        stress_kpa = (V * Q) / (I * b)
+        if b == 0.0 or I == 0.0:
+            stress_kpa = 0.0
+        else:
+            stress_kpa = (V * Q) / (I * b)
 
         stress_mpa = float(stress_kpa) / 1000.0
         return stress_mpa

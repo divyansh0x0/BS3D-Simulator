@@ -1,6 +1,6 @@
 from typing import Literal, Callable, TypeAlias, override
 
-import numpy as np
+import math
 
 # 1. Custom Type Aliases
 BeamType = Literal["Rectangular", "Circular", "IBeam"]
@@ -231,7 +231,7 @@ class CircularBeam(Beam):
     @override
     def get_second_moment_of_area(self) -> float:
         d = self.diameter
-        return (np.pi * d ** 4) / 64
+        return (math.pi * d ** 4) / 64
 
     @override
     def get_first_moment_of_area(self, y: float) -> float:
@@ -241,7 +241,7 @@ class CircularBeam(Beam):
     @override
     def get_width(self, y: float) -> float:
         r = self.diameter / 2
-        return 2 * np.sqrt(max(0, r ** 2 - y ** 2))
+        return 2 * math.sqrt(max(0, r ** 2 - y ** 2))
 
     @override
     def get_height(self) -> float:
