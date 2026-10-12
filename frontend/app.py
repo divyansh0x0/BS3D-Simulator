@@ -21,12 +21,19 @@ def app(page: ft.Page) -> None:
 
     # Initialize Components
     beam_canvas: CanvasView = CanvasView(state)
+
+    def on_cross_section_change() -> None:
+        """Fast real-time handler invoked continuously while sliding."""
+        beam_canvas.redraw()
+        right_panel.refresh()
+
     cross_section_slider: CrossSectionSlider = CrossSectionSlider(
         state=state,
-        on_change=beam_canvas.redraw,
+        on_change=on_cross_section_change,
     )
 
     def on_state_change() -> None:
+        """Full re-solve handler invoked on beam geometry or load changes."""
         state.solve()
         beam_canvas.redraw()
         cross_section_slider.refresh()
@@ -48,7 +55,7 @@ def app(page: ft.Page) -> None:
         on_load_type_change=on_load_type_change,
     )
 
-    y_slider_panel = YSliderPanel(state=state, on_change=on_state_change)
+    y_slider_panel = YSliderPanel(state=state, on_change=on_cross_section_change)
 
     center_viewport = ft.Column(
         controls=[

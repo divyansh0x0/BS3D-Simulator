@@ -12,7 +12,7 @@ from frontend.models import (
     UDLLoadState,
     UVLLoadState,
 )
-from frontend.state_manager import StateManager
+from frontend.state_manager import AnalysisConfig, DiagramDataMap, StateManager
 
 __all__ = [
     "BeamDimensions",
@@ -26,4 +26,6 @@ __all__ = [
     "UVLLoadState",
     "MaterialType",
     "StateManager",
+    "AnalysisConfig",
+    "DiagramDataMap",
 ]

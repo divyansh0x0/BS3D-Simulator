@@ -25,8 +25,14 @@ class CrossSectionSlider(ft.Container):
 
         def on_slider_move(e: Any) -> None:
             val = float(e.control.value)
+            self.state.cross_section_x = val
             self.current_val_text.value = f"{val:.2f}m"
-            self.current_val_text.update()
+            try:
+                self.current_val_text.update()
+            except RuntimeError:
+                pass
+            if self.on_change:
+                self.on_change()
 
         self.slider = ft.Slider(
             min=0,

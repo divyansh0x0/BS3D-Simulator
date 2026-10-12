@@ -4,7 +4,7 @@ from typing import Tuple
 import flet as ft
 import flet.canvas as cv
 
-from frontend.components.canvas.drawing_utils import draw_arrow, min_max_x, min_max_y
+from frontend.components.canvas.drawing_utils import draw_arrow, min_max_x, min_max_y, min_max_xy
 
 
 class GraphRenderer:
@@ -53,8 +53,7 @@ class GraphRenderer:
             min_y, max_y = 0.0, 0.0
             min_x, max_x = 0.0, 0.0
         else:
-            min_y, max_y = min_max_y(points)
-            min_x, max_x = min_max_x(points)
+            min_x, max_x, min_y, max_y = min_max_xy(points)
 
         max_abs_y = max(abs(min_y), abs(max_y)) * 1.1
         if max_abs_y == 0:

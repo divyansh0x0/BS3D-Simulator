@@ -20,6 +20,25 @@ def min_max_x(points: list[Tuple[float, float]]) -> Tuple[float, float]:
     return min_x, max_x
 
 
+def min_max_xy(points: list[Tuple[float, float]]) -> Tuple[float, float, float, float]:
+    """Single-pass min/max calculation for x and y points."""
+    if not points:
+        return 0.0, 0.0, 0.0, 0.0
+    p0 = points[0]
+    min_x = max_x = p0[0]
+    min_y = max_y = p0[1]
+    for px, py in points[1:]:
+        if px < min_x:
+            min_x = px
+        elif px > max_x:
+            max_x = px
+        if py < min_y:
+            min_y = py
+        elif py > max_y:
+            max_y = py
+    return min_x, max_x, min_y, max_y
+
+
 def draw_arrow(canvas: cv.Canvas, x: float, y: float, angle: float = 0, paint=None) -> None:
     h1 = 5
     w1 = 3 * h1

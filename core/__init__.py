@@ -1,18 +1,23 @@
-from core.types import BeamType, LoadType, LoadFunction
-from core.integration import simpsonIntegral
-from core.loads import ReactionForce, PointLoad, Load
-from core.beam import Beam
-from core.sections import RectangularBeam, CircularBeam, IBeam
+from core.beam import Beam, BeamEquilibriumState
+from core.integration import SimpsonIntegrator, simpsonIntegral, simpson_one_third
+from core.loads import Load, LoadProfileMap, PointLoad, ReactionForce
+from core.sections import CircularBeam, IBeam, RectangularBeam
+from core.types import BeamType, LoadFunction, LoadType, Point2D
 
 __all__ = [
     "BeamType",
     "LoadType",
     "LoadFunction",
+    "Point2D",
+    "SimpsonIntegrator",
     "simpsonIntegral",
+    "simpson_one_third",
     "ReactionForce",
     "PointLoad",
     "Load",
+    "LoadProfileMap",
     "Beam",
+    "BeamEquilibriumState",
     "RectangularBeam",
     "CircularBeam",
     "IBeam",
