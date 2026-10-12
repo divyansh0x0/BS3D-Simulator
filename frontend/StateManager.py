@@ -12,7 +12,17 @@ from frontend.models import (
     UDLLoadState,
     UVLLoadState,
 )
-from frontend.state_manager import AnalysisConfig, DiagramDataMap, StateManager
+from frontend.state_manager import (
+    AnalysisConfig,
+    CrossSectionStressCache,
+    CrossSectionStressMap,
+    DepthStressCache,
+    DepthStressEvaluation,
+    DiagramDataMap,
+    SectionUnitStressMap,
+    StateManager,
+    UnitStressProfilePoint,
+)
 
 __all__ = [
     "BeamDimensions",
@@ -28,4 +38,10 @@ __all__ = [
     "StateManager",
     "AnalysisConfig",
     "DiagramDataMap",
+    "CrossSectionStressCache",
+    "CrossSectionStressMap",
+    "DepthStressCache",
+    "DepthStressEvaluation",
+    "SectionUnitStressMap",
+    "UnitStressProfilePoint",
 ]
