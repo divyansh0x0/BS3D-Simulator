@@ -24,7 +24,7 @@ def app(page: ft.Page) -> None:
 
     def on_cross_section_change() -> None:
         """Fast real-time handler invoked continuously while sliding."""
-        beam_canvas.redraw()
+        beam_canvas.redraw_dynamic()
         right_panel.refresh()
 
     cross_section_slider: CrossSectionSlider = CrossSectionSlider(

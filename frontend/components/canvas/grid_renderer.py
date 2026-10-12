@@ -59,6 +59,7 @@ class GridRenderer:
         realtime_width: float,
         realtime_height: float,
         section_width_fraction: float,
+        slider_paint: ft.Paint | None = None,
     ) -> None:
         if beam_length <= 0:
             return
@@ -66,16 +67,17 @@ class GridRenderer:
         w_beam = realtime_width * section_width_fraction - spacing * 2
         slider_pixel_x = spacing + (cross_section_x / beam_length) * w_beam
 
+        line_paint = slider_paint or ft.Paint(
+            stroke_width=2,
+            color=ft.Colors.PRIMARY,
+            style=ft.PaintingStyle.STROKE,
+        )
         slider_line_shape = cv.Line(
             x1=slider_pixel_x,
             y1=0,
             x2=slider_pixel_x,
             y2=realtime_height,
-            paint=ft.Paint(
-                stroke_width=2,
-                color=ft.Colors.PRIMARY,
-                style=ft.PaintingStyle.STROKE,
-            ),
+            paint=line_paint,
         )
         slider_text_shape = cv.Text(
             x=slider_pixel_x + 5,
