@@ -2,7 +2,9 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 
-from core.Beam import Beam, CircularBeam, IBeam, RectangularBeam, BeamType
+from core.beam import Beam
+from core.sections import CircularBeam, IBeam, RectangularBeam
+from core.types import BeamType
 from frontend.models import (
     BeamDimensions,
     CircularDimensions,

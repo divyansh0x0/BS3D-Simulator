@@ -183,7 +183,7 @@ class LeftPanel(ft.Container):
 
     async def change_dimensions(self, e: Any) -> None:
         from typing import cast
-        from core.Beam import BeamType
+        from core.types import BeamType
         from frontend.StateManager import RectangularDimensions, CircularDimensions, IBeamDimensions
         selected_beam = cast(BeamType, e.control.value) if e.control.value else None
         self.state.beam_type = selected_beam
